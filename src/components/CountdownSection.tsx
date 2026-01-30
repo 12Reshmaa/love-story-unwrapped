@@ -1,84 +1,30 @@
 import { motion, useInView } from 'framer-motion';
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { useConfetti } from '@/hooks/useConfetti';
-
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
+import { useRef, useState, useEffect } from 'react';
 
 const CountdownSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-10%" });
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [isComplete, setIsComplete] = useState(false);
-  const [hasTriggeredConfetti, setHasTriggeredConfetti] = useState(false);
-  const { burst, shower } = useConfetti();
+  const [displayValues, setDisplayValues] = useState({ days: 12, hours: 7, minutes: 34, seconds: 52 });
 
-  // Configure your target date and event here
-  const targetDate = new Date('2025-02-14'); // Example: Valentine's Day 2025
-  const eventName = "Valentine's Day";
-  const eventEmoji = "💝";
-
-  const calculateTimeLeft = useCallback(() => {
-    const now = new Date();
-    const difference = targetDate.getTime() - now.getTime();
-
-    if (difference <= 0) {
-      return { days: 0, hours: 0, minutes: 0, seconds: 0, complete: true };
-    }
-
-    return {
-      days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-      hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-      minutes: Math.floor((difference / 1000 / 60) % 60),
-      seconds: Math.floor((difference / 1000) % 60),
-      complete: false,
-    };
-  }, []);
-
+  // Demo mode: Randomize digits every second (never reaches zero)
   useEffect(() => {
     const timer = setInterval(() => {
-      const result = calculateTimeLeft();
-      setTimeLeft({
-        days: result.days,
-        hours: result.hours,
-        minutes: result.minutes,
-        seconds: result.seconds,
+      setDisplayValues({
+        days: Math.floor(Math.random() * 30) + 1,    // 1-30
+        hours: Math.floor(Math.random() * 24),        // 0-23
+        minutes: Math.floor(Math.random() * 60),      // 0-59
+        seconds: Math.floor(Math.random() * 60),      // 0-59
       });
-
-      if (result.complete && !isComplete) {
-        setIsComplete(true);
-        if (!hasTriggeredConfetti) {
-          setHasTriggeredConfetti(true);
-          // Gentle confetti on completion
-          burst({ x: 0.3, y: 0.5, count: 15 });
-          burst({ x: 0.7, y: 0.5, count: 15 });
-          setTimeout(() => shower(), 500);
-        }
-      }
     }, 1000);
 
-    // Initial calculation
-    const initial = calculateTimeLeft();
-    setTimeLeft({
-      days: initial.days,
-      hours: initial.hours,
-      minutes: initial.minutes,
-      seconds: initial.seconds,
-    });
-    if (initial.complete) setIsComplete(true);
-
     return () => clearInterval(timer);
-  }, [calculateTimeLeft, isComplete, hasTriggeredConfetti, burst, shower]);
+  }, []);
 
   const timeUnits = [
-    { value: timeLeft.days, label: 'Days' },
-    { value: timeLeft.hours, label: 'Hours' },
-    { value: timeLeft.minutes, label: 'Minutes' },
-    { value: timeLeft.seconds, label: 'Seconds' },
+    { value: displayValues.days, label: 'Days' },
+    { value: displayValues.hours, label: 'Hours' },
+    { value: displayValues.minutes, label: 'Minutes' },
+    { value: displayValues.seconds, label: 'Seconds' },
   ];
 
   return (
@@ -98,115 +44,87 @@ const CountdownSection = () => {
             }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           >
-            {eventEmoji}
+            💝
           </motion.span>
 
           <span className="block text-sm font-medium tracking-widest uppercase text-white/60 mb-4">
             💍 What's Next 💍
           </span>
           <h2 className="font-display text-3xl md:text-4xl font-bold text-white">
-            Counting down to {eventName}
+            Counting Down to Something Special
           </h2>
           <p className="mt-4 text-white/70 italic font-handwritten text-lg">
             "Counting down to our next big moment…"
           </p>
         </motion.div>
 
-        {/* Countdown Display */}
-        {!isComplete ? (
-          <motion.div
-            className="flex justify-center gap-3 md:gap-6 mb-10"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={isInView ? { opacity: 1, scale: 1 } : {}}
-            transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            {timeUnits.map((unit, index) => (
+        {/* Demo Countdown Display */}
+        <motion.div
+          className="flex justify-center gap-3 md:gap-6 mb-10"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={isInView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          {timeUnits.map((unit, index) => (
+            <motion.div
+              key={unit.label}
+              className="relative"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ 
+                duration: 0.5, 
+                delay: 0.3 + index * 0.1,
+                ease: [0.25, 0.46, 0.45, 0.94],
+              }}
+            >
               <motion.div
-                key={unit.label}
-                className="relative"
-                initial={{ opacity: 0, y: 20 }}
-                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                className="w-16 h-20 md:w-20 md:h-24 rounded-xl flex flex-col items-center justify-center"
+                style={{
+                  background: 'linear-gradient(145deg, hsl(0 0% 10% / 0.8) 0%, hsl(0 0% 5% / 0.9) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 10px 30px -10px hsl(0 0% 0% / 0.5)',
+                }}
+                animate={{
+                  boxShadow: [
+                    '0 10px 30px -10px hsl(0 0% 0% / 0.5)',
+                    '0 10px 35px -10px hsl(var(--neon-pink) / 0.2)',
+                    '0 10px 30px -10px hsl(0 0% 0% / 0.5)',
+                  ],
+                }}
                 transition={{ 
-                  duration: 0.5, 
-                  delay: 0.3 + index * 0.1,
-                  ease: [0.25, 0.46, 0.45, 0.94],
+                  duration: 2, 
+                  delay: index * 0.3, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
                 }}
               >
-                <motion.div
-                  className="w-16 h-20 md:w-20 md:h-24 rounded-xl flex flex-col items-center justify-center"
-                  style={{
-                    background: 'linear-gradient(145deg, hsl(0 0% 10% / 0.8) 0%, hsl(0 0% 5% / 0.9) 100%)',
-                    backdropFilter: 'blur(10px)',
-                    boxShadow: '0 10px 30px -10px hsl(0 0% 0% / 0.5)',
-                  }}
-                  animate={{
-                    boxShadow: [
-                      '0 10px 30px -10px hsl(0 0% 0% / 0.5)',
-                      '0 10px 35px -10px hsl(var(--neon-pink) / 0.2)',
-                      '0 10px 30px -10px hsl(0 0% 0% / 0.5)',
-                    ],
-                  }}
-                  transition={{ 
-                    duration: 2, 
-                    delay: index * 0.3, 
-                    repeat: Infinity, 
-                    ease: "easeInOut" 
-                  }}
+                {/* Animated number with smooth transition */}
+                <motion.span
+                  className="font-display text-2xl md:text-3xl font-bold text-white"
+                  key={unit.value}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
                 >
-                  <motion.span
-                    className="font-display text-2xl md:text-3xl font-bold text-white"
-                    key={unit.value}
-                    initial={{ opacity: 0.8, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    {String(unit.value).padStart(2, '0')}
-                  </motion.span>
-                  <span className="text-[10px] md:text-xs text-white/50 mt-1 uppercase tracking-wider">
-                    {unit.label}
-                  </span>
-                </motion.div>
+                  {String(unit.value).padStart(2, '0')}
+                </motion.span>
+                <span className="text-[10px] md:text-xs text-white/50 mt-1 uppercase tracking-wider">
+                  {unit.label}
+                </span>
               </motion.div>
-            ))}
-          </motion.div>
-        ) : (
-          /* Completion State */
-          <motion.div
-            className="py-8"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            <motion.div
-              className="card-wrapped inline-block px-10 py-8"
-              style={{
-                boxShadow: '0 0 50px hsl(var(--neon-pink) / 0.4)',
-              }}
-              animate={{
-                boxShadow: [
-                  '0 0 50px hsl(var(--neon-pink) / 0.4)',
-                  '0 0 60px hsl(var(--neon-pink) / 0.5)',
-                  '0 0 50px hsl(var(--neon-pink) / 0.4)',
-                ],
-              }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <motion.span
-                className="text-5xl block mb-4"
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                🎉
-              </motion.span>
-              <h3 className="font-display text-2xl md:text-3xl font-bold text-white mb-2">
-                It's Here!
-              </h3>
-              <p className="text-white/70 font-handwritten text-lg">
-                Happy {eventName}, my love! 💕
-              </p>
             </motion.div>
-          </motion.div>
-        )}
+          ))}
+        </motion.div>
+
+        {/* Demo indicator */}
+        <motion.p
+          className="text-white/40 text-xs tracking-wider"
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ delay: 0.8 }}
+        >
+          ✨ Sample countdown preview ✨
+        </motion.p>
 
         {/* Decorative floating hearts */}
         <motion.div
