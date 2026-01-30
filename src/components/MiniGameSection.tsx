@@ -1,48 +1,19 @@
 import { motion, useInView } from 'framer-motion';
-import { useRef, useState, useCallback } from 'react';
-import { useConfetti } from '@/hooks/useConfetti';
+import { useRef, useState } from 'react';
+import PicturePuzzleGame from './PicturePuzzleGame';
+import CoupleQuizGame from './CoupleQuizGame';
+
+type GameTab = 'puzzle' | 'quiz';
 
 const MiniGameSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-10%" });
-  const [hearts, setHearts] = useState<boolean[]>([false, false, false, false, false]);
-  const [isComplete, setIsComplete] = useState(false);
-  const { burst } = useConfetti();
+  const [activeTab, setActiveTab] = useState<GameTab>('quiz');
 
-  const complimentMessages = [
-    "You make my heart skip a beat 💓",
-    "Every moment with you is precious ✨",
-    "You're my favorite person 💕",
-    "I'm so lucky to have you 🌟",
-    "You light up my world 💫",
+  const tabs: { id: GameTab; label: string; emoji: string }[] = [
+    { id: 'quiz', label: 'Couple Quiz', emoji: '❤️' },
+    { id: 'puzzle', label: 'Puzzle', emoji: '🧩' },
   ];
-
-  const [revealedMessage] = useState(() => 
-    complimentMessages[Math.floor(Math.random() * complimentMessages.length)]
-  );
-
-  const filledCount = hearts.filter(Boolean).length;
-  const progress = (filledCount / hearts.length) * 100;
-
-  const handleHeartClick = useCallback((index: number) => {
-    if (isComplete || hearts[index]) return;
-
-    const newHearts = [...hearts];
-    newHearts[index] = true;
-    setHearts(newHearts);
-
-    // Small burst on each heart
-    burst({ x: 0.5, y: 0.5, count: 8 });
-
-    // Check completion
-    const newFilledCount = newHearts.filter(Boolean).length;
-    if (newFilledCount === hearts.length) {
-      setIsComplete(true);
-      setTimeout(() => {
-        burst({ x: 0.5, y: 0.4, count: 20 });
-      }, 300);
-    }
-  }, [hearts, isComplete, burst]);
 
   return (
     <section ref={ref} className="py-24 md:py-32 px-6 relative overflow-hidden bg-background">
@@ -53,128 +24,80 @@ const MiniGameSection = () => {
         }}
       />
 
-      <div className="relative z-10 max-w-2xl mx-auto text-center">
+      <div className="relative z-10 max-w-2xl mx-auto">
         <motion.div
-          className="mb-12"
+          className="text-center mb-10"
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <span className="inline-block text-sm font-medium tracking-widest uppercase text-neon-pink/70 mb-4">
-            🎮 Mini Game 🎮
+            🎮 Interactive Games 🎮
           </span>
           <h2 className="font-display text-3xl md:text-4xl font-bold text-white">
-            Fill the Hearts
+            Play Together
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Tap each heart to unlock a sweet message
+            Fun little moments to share
           </p>
         </motion.div>
 
-        {/* Hearts Row */}
+        {/* Tab Switcher */}
         <motion.div
-          className="flex justify-center gap-4 md:gap-6 mb-8"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={isInView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.7, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="flex justify-center gap-2 mb-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.2 }}
         >
-          {hearts.map((filled, index) => (
+          {tabs.map((tab) => (
             <motion.button
-              key={index}
-              className="relative w-12 h-12 md:w-16 md:h-16 cursor-pointer focus:outline-none"
-              onClick={() => handleHeartClick(index)}
-              whileHover={!filled && !isComplete ? { scale: 1.1 } : {}}
-              whileTap={!filled && !isComplete ? { scale: 0.95 } : {}}
-              initial={{ opacity: 0, y: 20 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ 
-                duration: 0.5, 
-                delay: 0.3 + index * 0.1,
-                ease: [0.25, 0.46, 0.45, 0.94],
+              key={tab.id}
+              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+                activeTab === tab.id
+                  ? 'text-white'
+                  : 'text-white/50 hover:text-white/70'
+              }`}
+              style={{
+                background: activeTab === tab.id 
+                  ? 'linear-gradient(135deg, hsl(var(--neon-pink) / 0.3) 0%, hsl(var(--hot-coral) / 0.2) 100%)'
+                  : 'transparent',
+                border: activeTab === tab.id 
+                  ? '1px solid hsl(var(--neon-pink) / 0.3)'
+                  : '1px solid transparent',
               }}
+              onClick={() => setActiveTab(tab.id)}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <motion.span
-                className={`text-4xl md:text-5xl block transition-all duration-300 ${
-                  filled ? 'opacity-100' : 'opacity-40 grayscale'
-                }`}
-                animate={filled ? {
-                  scale: [1, 1.3, 1],
-                } : {}}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              >
-                {filled ? '❤️' : '🤍'}
-              </motion.span>
-
-              {/* Glow effect when filled */}
-              {filled && (
-                <motion.div
-                  className="absolute inset-0 rounded-full"
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 0.4, scale: 1.5 }}
-                  style={{
-                    background: 'radial-gradient(circle, hsl(var(--neon-pink) / 0.6) 0%, transparent 70%)',
-                  }}
-                  transition={{ duration: 0.4 }}
-                />
-              )}
+              <span className="mr-2">{tab.emoji}</span>
+              {tab.label}
             </motion.button>
           ))}
         </motion.div>
 
-        {/* Progress Bar */}
+        {/* Game Content */}
         <motion.div
-          className="max-w-xs mx-auto mb-8"
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.5 }}
+          className="card-wrapped p-6 md:p-8"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={isInView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          style={{
+            boxShadow: '0 0 40px hsl(var(--neon-pink) / 0.1)',
+          }}
         >
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{
-                background: 'linear-gradient(90deg, hsl(var(--neon-pink)) 0%, hsl(var(--hot-coral)) 100%)',
-              }}
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            />
-          </div>
-          <p className="text-white/40 text-xs mt-2">
-            {filledCount} of {hearts.length} hearts filled
-          </p>
+          {activeTab === 'quiz' && <CoupleQuizGame />}
+          {activeTab === 'puzzle' && <PicturePuzzleGame />}
         </motion.div>
 
-        {/* Revealed Message */}
-        <motion.div
-          className="min-h-[80px] flex items-center justify-center"
+        {/* Footer hint */}
+        <motion.p
+          className="text-center mt-6 text-white/30 text-xs"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ delay: 0.8 }}
         >
-          {isComplete ? (
-            <motion.div
-              className="card-wrapped px-8 py-6"
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-              style={{
-                boxShadow: '0 0 40px hsl(var(--neon-pink) / 0.3)',
-              }}
-            >
-              <motion.p
-                className="font-handwritten text-xl md:text-2xl text-white"
-                animate={{ scale: [1, 1.02, 1] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                {revealedMessage}
-              </motion.p>
-            </motion.div>
-          ) : (
-            <p className="text-white/30 text-sm italic">
-              Keep tapping to reveal the message...
-            </p>
-          )}
-        </motion.div>
+          ✨ Sample games for preview ✨
+        </motion.p>
       </div>
     </section>
   );
