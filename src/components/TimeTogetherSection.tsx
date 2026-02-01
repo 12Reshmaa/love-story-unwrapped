@@ -8,7 +8,7 @@ const TimeTogetherSection = () => {
   const [displayValues, setDisplayValues] = useState({ years: 0, days: 0 });
 
   // Configure your relationship start date here (YYYY-MM-DD format)
-  const START_DATE = '2023-01-15'; // Change this to your actual start date
+  const START_DATE = '2013-01-15'; // Change this to your actual start date
 
   const calculateTime = () => {
     const now = new Date();
@@ -144,7 +144,7 @@ const TimeTogetherSection = () => {
               }}
             >
               <span className="font-display text-2xl md:text-4xl font-bold text-white">
-                {displayValues.years} {displayValues.years === 1 ? 'year' : 'years'}, {displayValues.days} {displayValues.days === 1 ? 'day' : 'days'} together
+                {displayValues.years} {displayValues.years === 1 ? 'year' : 'years'}, {displayValues.days} {displayValues.days === 1 ? 'day' : 'days'} Together
               </span>
             </motion.div>
           </motion.div>
