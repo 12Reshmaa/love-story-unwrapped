@@ -10,12 +10,7 @@ const TimeTogetherSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-10%" });
   const [hasAnimated, setHasAnimated] = useState(false);
-  const [displayValues, setDisplayValues] = useState({ 
-    years: 0, 
-    months: 0, 
-    totalDays: 0, 
-    totalSeconds: 0 
-  });
+  const [displayValues, setDisplayValues] = useState({ years: 0, months: 0, days: 0 });
 
   // Configure your relationship start date here (YYYY-MM-DD format)
   const START_DATE = '2023-01-15'; // Change this to your actual start date
@@ -23,11 +18,6 @@ const TimeTogetherSection = () => {
   const calculateElapsedTime = () => {
     const now = new Date();
     const start = new Date(START_DATE);
-    
-    // Calculate total elapsed time
-    const totalDiff = now.getTime() - start.getTime();
-    const totalSeconds = Math.floor(totalDiff / 1000);
-    const totalDays = Math.floor(totalDiff / (1000 * 60 * 60 * 24));
     
     // Calculate calendar-based years
     let years = 0;
@@ -63,8 +53,16 @@ const TimeTogetherSection = () => {
       months++;
       testMonth = nextMonth;
     }
+    
+    // Calculate remaining days after the last full month
+    const lastMonthAnniversary = new Date(start);
+    lastMonthAnniversary.setFullYear(lastMonthAnniversary.getFullYear() + years);
+    lastMonthAnniversary.setMonth(lastMonthAnniversary.getMonth() + months);
+    
+    const daysDiff = now.getTime() - lastMonthAnniversary.getTime();
+    const days = Math.floor(daysDiff / (1000 * 60 * 60 * 24));
 
-    return { years, months, totalDays, totalSeconds };
+    return { years, months, days };
   };
 
   useEffect(() => {
@@ -73,7 +71,7 @@ const TimeTogetherSection = () => {
     }
   }, [isInView, hasAnimated]);
 
-  // Live update interval - updates every second
+  // Live update interval - updates every second to keep display "alive"
   useEffect(() => {
     // Calculate initial values
     const initialValues = calculateElapsedTime();
@@ -91,8 +89,7 @@ const TimeTogetherSection = () => {
   const timeUnits: TimeUnit[] = [
     { value: displayValues.years, label: displayValues.years === 1 ? 'Year' : 'Years' },
     { value: displayValues.months, label: displayValues.months === 1 ? 'Month' : 'Months' },
-    { value: displayValues.totalDays, label: displayValues.totalDays === 1 ? 'Day' : 'Days' },
-    { value: displayValues.totalSeconds, label: displayValues.totalSeconds === 1 ? 'Second' : 'Seconds' },
+    { value: displayValues.days, label: displayValues.days === 1 ? 'Day' : 'Days' },
   ];
 
   return (
@@ -162,9 +159,7 @@ const TimeTogetherSection = () => {
                 }}
               >
                 <span className="font-display text-3xl md:text-5xl font-bold text-white">
-                  {unit.label === 'Seconds' || unit.label === 'Second' 
-                    ? unit.value.toLocaleString() 
-                    : unit.value}
+                  {unit.value}
                 </span>
                 <span className="text-xs md:text-sm text-muted-foreground mt-1">
                   {unit.label}
@@ -174,18 +169,15 @@ const TimeTogetherSection = () => {
           ))}
         </motion.div>
 
-        {/* Total days note */}
+        {/* Secondary message */}
         <motion.div
-          className="card-wrapped inline-block px-6 py-4"
+          className="mt-6"
           initial={{ opacity: 0, y: 20 }}
           animate={isInView && hasAnimated ? { opacity: 1, y: 0 } : { opacity: 0 }}
           transition={{ duration: 0.6, delay: 2.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-          style={{
-            boxShadow: '0 0 30px hsl(var(--golden-yellow) / 0.15)',
-          }}
         >
-          <p className="text-white/70 text-sm md:text-base">
-            That's <span className="text-golden-yellow font-semibold">{displayValues.totalDays.toLocaleString()}</span> days of loving you 💕
+          <p className="text-white/50 text-sm md:text-base italic">
+            and still counting every second
           </p>
         </motion.div>
 
