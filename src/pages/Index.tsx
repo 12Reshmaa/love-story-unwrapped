@@ -2,7 +2,6 @@ import HeroSection from '@/components/HeroSection';
 import IntroMessageSection from '@/components/IntroMessageSection';
 import PhotoMemoriesSection from '@/components/PhotoMemoriesSection';
 import MovieSection from '@/components/MovieSection';
-import ScratchCardSection from '@/components/ScratchCardSection';
 import EnvelopeLetterSection from '@/components/EnvelopeLetterSection';
 import SignOffSection from '@/components/SignOffSection';
 import ExtraSurprisesHeader from '@/components/ExtraSurprisesHeader';
@@ -11,6 +10,7 @@ import MiniGameSection from '@/components/MiniGameSection';
 import PlaylistPreviewSection from '@/components/PlaylistPreviewSection';
 import TimeTogetherSection from '@/components/TimeTogetherSection';
 import CountdownSection from '@/components/CountdownSection';
+import ScratchReveal from "@/components/ScratchReveal";
 
 const Index = () => {
   return (
@@ -19,6 +19,7 @@ const Index = () => {
       <HeroSection />
       
       {/* 2. Intro Message - Setting the tone */}
+
       <IntroMessageSection />
       
       {/* 3. Photo Memories - Scrapbook moment */}
@@ -28,7 +29,13 @@ const Index = () => {
       <MovieSection />
       
       {/* 5. Surprise Reveal - Scratch Card */}
-      <ScratchCardSection />
+      <ScratchReveal
+  revealContent={{
+    title: "Surprise 💖",
+    message: "This was hidden just for you",
+    link: "https://example.com"
+  }}
+/>
       
       {/* 6. Envelope Letter - Emotional climax */}
       <EnvelopeLetterSection />

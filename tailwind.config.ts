@@ -88,10 +88,25 @@ export default {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        "wiggle": {
+          "0%, 100%": { transform: "rotate(-3deg)" },
+          "50%": { transform: "rotate(3deg)" },
+        },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
+        "scale-in": {
+          "0%": { transform: "scale(0.8)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
-        "accordion-up": "accordion-up 0.2s ease-out",
+        "heart-beat": "heart-beat 1.5s ease-in-out infinite",
+        "wiggle": "wiggle 0.3s ease-in-out infinite",
+        "spin-slow": "spin-slow 3s linear infinite",
+        "scale-in": "scale-in 0.5s ease-out forwards",
       },
     },
   },
