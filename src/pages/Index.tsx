@@ -11,6 +11,7 @@ import PlaylistPreviewSection from '@/components/PlaylistPreviewSection';
 import TimeTogetherSection from '@/components/TimeTogetherSection';
 import CountdownSection from '@/components/CountdownSection';
 import ScratchReveal from "@/components/ScratchReveal";
+import PhotoGallery from "@/components/PhotoGallery";
 
 const Index = () => {
   return (
@@ -46,6 +47,7 @@ const Index = () => {
       {/* 7. Mystery Box - Double-tap reveal */}
       <MysteryBoxSection />
       
+      
       {/* 8. Mini Game - Fill the hearts */}
       <MiniGameSection />
       
@@ -54,6 +56,8 @@ const Index = () => {
       
       {/* 10. Time Together Counter */}
       <TimeTogetherSection />
+
+      <PhotoGallery />   {/* 👈 THIS LINE IS REQUIRED */}
       
       {/* 11. Upcoming Moment Countdown */}
       <CountdownSection />

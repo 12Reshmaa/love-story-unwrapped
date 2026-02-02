@@ -89,7 +89,21 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [initCanvas, isRevealed]);
-
+  useEffect(() => {
+    if (isDrawing.current) {
+      document.body.style.overflow = "hidden";
+      document.body.style.touchAction = "none";
+    } else {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    }
+  
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+    };
+  }, [scratchPercentage]);
+  
   const scratch = useCallback((x: number, y: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -161,6 +175,7 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
   };
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault(); 
     isDrawing.current = true;
     const pos = getPosition(e);
     scratch(pos.x, pos.y);
@@ -168,6 +183,7 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
 
   const handleMove = (e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing.current) return;
+    e.preventDefault();  
     const pos = getPosition(e);
     scratch(pos.x, pos.y);
   };
@@ -258,7 +274,7 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
             {/* Scratch overlay */}
             <motion.canvas
               ref={canvasRef}
-              className="absolute inset-0 scratch-canvas"
+              className="absolute inset-0 scratch-canvas touch-none"
               onMouseDown={handleStart}
               onMouseMove={handleMove}
               onMouseUp={handleEnd}
@@ -268,7 +284,8 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
               onTouchEnd={handleEnd}
               animate={{ opacity: isRevealed ? 0 : 1 }}
               transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-              style={{ pointerEvents: isRevealed ? "none" : "auto" }}
+              style={{ pointerEvents: isRevealed ? "none" : "auto",
+              touchAction: "none"}}
             />
           </motion.div>
         </ScrollReveal>

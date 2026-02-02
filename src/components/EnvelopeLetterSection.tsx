@@ -1,700 +1,637 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useRef, useState } from 'react';
-import { useInView } from 'framer-motion';
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const FloatingParticle = ({ delay }: { delay: number }) => (
-  <motion.div
-    className="absolute w-1 h-1 rounded-full bg-golden-yellow/20"
-    initial={{ 
-      x: Math.random() * 100 - 50,
-      y: 100,
-      opacity: 0,
-      scale: Math.random() * 0.5 + 0.5,
-    }}
-    animate={{ 
-      y: -100,
-      opacity: [0, 0.4, 0],
-      x: Math.random() * 60 - 30,
-    }}
-    transition={{
-      duration: 8 + Math.random() * 4,
-      delay: delay,
-      repeat: Infinity,
-      ease: "linear",
-    }}
-  />
-);
-
-// Floating petal component for bouquet reveal
-const FloatingPetal = ({ delay, startX }: { delay: number; startX: number }) => (
-  <motion.div
-    className="absolute"
-    style={{ left: `${startX}%` }}
-    initial={{ 
-      y: 0,
-      opacity: 0,
-      rotate: 0,
-      scale: 0.6,
-    }}
-    animate={{ 
-      y: [0, -50, -30, -80],
-      opacity: [0, 0.7, 0.5, 0],
-      rotate: [0, 45, -30, 60],
-      x: [0, 20, -15, 30],
-    }}
-    transition={{
-      duration: 6 + Math.random() * 2,
-      delay: delay,
-      ease: "easeOut",
-    }}
-  >
-    <svg 
-      width="16" 
-      height="20" 
-      viewBox="0 0 16 20" 
-      className="text-neon-pink/40"
-      fill="currentColor"
-    >
-      <ellipse cx="8" cy="10" rx="6" ry="9" />
-    </svg>
-  </motion.div>
-);
+type LetterState =
+  | "closed"
+  | "opening"
+  | "open"
+  | "closing"
+  | "bouquet"
+  | "bouquetWithLetter";
 
 const EnvelopeLetterSection = () => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-10%" });
-  const [phase, setPhase] = useState<'idle' | 'cracking' | 'opening' | 'sliding' | 'unfolding1' | 'unfolding2' | 'revealed' | 'bouquet'>('idle');
-  const [isHovered, setIsHovered] = useState(false);
-  const [hasSeenBouquet, setHasSeenBouquet] = useState(false);
+  const [state, setState] = useState<LetterState>("closed");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll when letter is open
+  useEffect(() => {
+    if (
+      state === "open" ||
+      state === "closing" ||
+      state === "bouquet" ||
+      state === "bouquetWithLetter"
+    ) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+  
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [state]);
 
   const handleSealClick = () => {
-    if (phase !== 'idle') return;
-    
-    // Staged reveal with intentional pauses
-    setPhase('cracking');
-    setTimeout(() => setPhase('opening'), 800);
-    setTimeout(() => setPhase('sliding'), 1800);
-    setTimeout(() => setPhase('unfolding1'), 2800);
-    setTimeout(() => setPhase('unfolding2'), 3600);
-    setTimeout(() => setPhase('revealed'), 4400);
-  };
-
-  const handleClose = () => {
-    if (phase === 'revealed' && !hasSeenBouquet) {
-      // Trigger bouquet moment after first reading
-      setPhase('bouquet');
-      setHasSeenBouquet(true);
-      // Auto-dismiss bouquet after viewing
-      setTimeout(() => setPhase('idle'), 6000);
-    } else {
-      setPhase('idle');
+    if (state === "closed") {
+      setState("opening");
+      setTimeout(() => setState("open"), 2200);
     }
   };
 
-  const letterContent = {
-    greeting: "My dearest love,",
-    paragraphs: [
-      "I've been carrying these words in my heart for so long, and now they finally have a place to rest — right here, just for you.",
-      "Do you remember the first time we laughed until we couldn't breathe? Or the quiet moments when no words were needed, just being together was enough? Those are the moments I hold closest.",
-      "You've taught me what it means to be truly seen, to be loved not despite my flaws but with them. With you, I've found a home I never knew I was searching for.",
-    ],
-    closing: "Forever and always,",
-    signature: "Your person 💕",
+  const handleClose = () => {
+    if (state === "open") {
+      setState("closing");
+  
+      // Letter closes first
+      setTimeout(() => {
+        setState("bouquet");
+  
+        // After bouquet animation finishes, show letter again
+        setTimeout(() => {
+          setState("bouquetWithLetter");
+        }, 3200); // ← bouquet animation duration
+      }, 600);
+    }
   };
+  
 
-  const isOpen = phase !== 'idle' && phase !== 'cracking' && phase !== 'bouquet';
-  const showLetter = phase === 'sliding' || phase === 'unfolding1' || phase === 'unfolding2' || phase === 'revealed';
-  const letterUnfolded = phase === 'unfolding2' || phase === 'revealed';
-  const fullyRevealed = phase === 'revealed';
-  const showBouquet = phase === 'bouquet';
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && state === "open") {
+      handleClose();
+    }
+  };
 
   return (
     <section 
-      ref={ref} 
-      className="py-24 md:py-32 px-6 relative overflow-hidden min-h-screen flex items-center justify-center"
-      style={{
-        background: 'radial-gradient(ellipse at center, hsl(0 0% 8%) 0%, hsl(0 0% 4%) 100%)',
-      }}
+      ref={containerRef}
+      className="min-h-screen flex items-center justify-center px-6 py-20 relative overflow-hidden"
     >
-      {/* Floating dust particles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(12)].map((_, i) => (
-          <FloatingParticle key={i} delay={i * 0.8} />
-        ))}
-      </div>
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-secondary/20 via-background to-primary/10" />
 
-      {/* Subtle warm ambient glow */}
-      <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle at 50% 60%, hsl(var(--golden-yellow) / 0.03) 0%, transparent 50%)',
-        }}
-      />
+      {/* Static decorative elements - no animation */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-love/5 rounded-full blur-2xl opacity-40" />
+      <div className="absolute bottom-20 right-10 w-40 h-40 bg-primary/5 rounded-full blur-2xl opacity-35" />
 
-      {/* Background blur overlay when letter is open - FIXED: Now separate from letter */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className="fixed inset-0 z-40 cursor-pointer"
-            style={{
-              background: 'radial-gradient(ellipse at center, hsl(0 0% 3% / 0.9) 0%, hsl(0 0% 2% / 0.97) 100%)',
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-            onClick={handleClose}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* BOUQUET REVEAL MOMENT */}
-      <AnimatePresence>
-        {showBouquet && (
-          <motion.div
-            className="fixed inset-0 z-50 flex flex-col items-center justify-center pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5 }}
-          >
-            {/* Soft background overlay */}
+      {/* Main Content Area */}
+      <div className="relative z-10 w-full max-w-md mx-auto">
+        
+        {/* Closed Envelope */}
+        <AnimatePresence>
+          {(state === "closed" || state === "opening") && (
             <motion.div
-              className="absolute inset-0"
-              style={{
-                background: 'radial-gradient(ellipse at center, hsl(330 40% 8% / 0.95) 0%, hsl(0 0% 3% / 0.98) 100%)',
-              }}
+              className="relative"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, delay: 1.5 }}
+            >
+              <Envelope 
+                isOpening={state === "opening"} 
+                onSealClick={handleSealClick}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Open Letter Modal - Fixed position with scroll lock */}
+        <AnimatePresence>
+          {(state === "open" || state === "closing") && (
+            <motion.div
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 1 }}
-            />
-
-            {/* Floating petals */}
-            <div className="absolute inset-0 overflow-hidden">
-              {[...Array(8)].map((_, i) => (
-                <FloatingPetal key={i} delay={0.5 + i * 0.3} startX={20 + Math.random() * 60} />
-              ))}
-            </div>
-
-            {/* Bouquet assembly */}
-            <motion.div
-              className="relative z-10 flex flex-col items-center"
-              initial={{ scale: 0.3, opacity: 0, y: 50 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ 
-                duration: 2.5, 
-                ease: [0.25, 0.46, 0.45, 0.94],
-                delay: 0.3,
-              }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              onClick={handleBackdropClick}
             >
-              {/* Bouquet SVG/Emoji composition */}
-              <div className="relative">
-                {/* Background glow */}
-                <motion.div
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: 'radial-gradient(circle, hsl(var(--neon-pink) / 0.2) 0%, transparent 70%)',
-                    filter: 'blur(40px)',
-                    width: '200px',
-                    height: '200px',
-                    left: '-30px',
-                    top: '-30px',
-                  }}
-                  animate={{
-                    scale: [1, 1.1, 1],
-                    opacity: [0.5, 0.7, 0.5],
-                  }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                />
-                
-                {/* Flowers blooming in sequence */}
-                <div className="relative flex items-end justify-center gap-1">
-                  {['🌸', '🌷', '💐', '🌷', '🌸'].map((flower, i) => (
-                    <motion.span
-                      key={i}
-                      className="text-4xl md:text-5xl"
-                      initial={{ scale: 0, opacity: 0, y: 20 }}
-                      animate={{ scale: 1, opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 1.2,
-                        delay: 0.8 + i * 0.2,
-                        ease: [0.25, 0.46, 0.45, 0.94],
-                      }}
-                      style={{
-                        transformOrigin: 'bottom center',
-                      }}
-                    >
-                      {flower}
-                    </motion.span>
-                  ))}
-                </div>
-              </div>
-
-              {/* "This is for you" text */}
-              <motion.p
-                className="font-handwritten text-xl md:text-2xl text-neon-pink/80 mt-8 text-center"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.5, delay: 2.2, ease: "easeOut" }}
-              >
-                This is for you.
-              </motion.p>
+              {/* Blurred backdrop */}
+              <motion.div 
+                className="absolute inset-0 bg-foreground/30 backdrop-blur-md"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              />
+              
+              {/* Letter */}
+              <Letter 
+                isClosing={state === "closing"} 
+                onClose={handleClose}
+              />
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
 
-      <div className="relative z-10 max-w-2xl mx-auto w-full">
-        {/* Section Header */}
+        {/* Rose Bouquet Reveal */}
+        <AnimatePresence>
+  {(state === "bouquet" || state === "bouquetWithLetter") && (
+    <motion.div
+      className="fixed inset-0 z-[120] flex items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      {/* Content layout */}
+      <motion.div
+        className="
+        relative z-10 w-full px-4
+        flex flex-col items-center gap-8
+        md:flex-row md:items-start md:justify-center md:gap-12
+        max-w-6xl"
+      >
+        {/* Bouquet */}
         <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView && !isOpen && !showBouquet ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          animate={
+            state === "bouquetWithLetter"
+              ? { x: -120 }
+              : { x: 0 }
+          }
+          transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
         >
-          <span className="inline-block text-sm font-medium tracking-widest uppercase text-golden-yellow/60 mb-4">
-            ✉️ Something Private ✉️
-          </span>
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground/90">
-            A Letter For You
-          </h2>
-          <p className="mt-4 text-muted-foreground/70 italic text-sm">
-            Break the seal when you're ready...
-          </p>
+          <RoseBouquet />
         </motion.div>
 
-        {/* Envelope Container */}
-        <motion.div
-          className="relative z-10"
-          style={{ perspective: '1200px' }}
-          initial={{ opacity: 0, y: 50 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          {/* Envelope */}
-          <motion.div 
-            className="relative w-full max-w-sm md:max-w-md mx-auto"
-            style={{ aspectRatio: '4/3' }}
-            animate={isOpen ? { y: -20, scale: 1.02 } : {}}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
-            {/* Envelope shadow */}
-            <div 
-              className="absolute inset-0 rounded-lg"
-              style={{
-                background: 'hsl(0 0% 0% / 0.4)',
-                filter: 'blur(30px)',
-                transform: 'translateY(20px) scaleX(0.9)',
-              }}
-            />
-
-            {/* Envelope Back Layer */}
-            <div 
-              className="absolute inset-0 rounded-lg overflow-hidden"
-              style={{
-                background: 'linear-gradient(165deg, hsl(32 35% 28%) 0%, hsl(28 30% 20%) 50%, hsl(25 28% 16%) 100%)',
-                boxShadow: 'inset 0 2px 10px hsl(0 0% 0% / 0.3), 0 20px 60px -15px hsl(0 0% 0% / 0.6)',
-              }}
-            >
-              {/* Paper texture overlay */}
-              <div 
-                className="absolute inset-0 opacity-30 mix-blend-overlay"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                }}
-              />
-              
-              {/* Inner edge shadow for depth */}
-              <div 
-                className="absolute inset-0"
-                style={{
-                  boxShadow: 'inset 0 0 40px hsl(0 0% 0% / 0.2)',
-                }}
-              />
-            </div>
-
-            {/* Envelope Flap */}
+        {/* Letter appears AFTER bouquet animation */}
+        <AnimatePresence>
+          {state === "bouquetWithLetter" && (
             <motion.div
-              className="absolute top-0 left-0 right-0 origin-bottom"
-              style={{ 
-                height: '55%',
-                transformStyle: 'preserve-3d',
-                zIndex: phase === 'idle' || phase === 'cracking' ? 20 : 5,
-              }}
-              animate={isOpen ? { rotateX: -175 } : { rotateX: 0 }}
-              transition={{ 
-                duration: 1.4, 
-                ease: [0.25, 0.46, 0.45, 0.94], 
-                delay: phase === 'opening' ? 0 : 0.3 
-              }}
+              initial={{ opacity: 0, x: 40, scale: 0.95 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
             >
-              {/* Flap Front */}
-              <div 
-                className="absolute inset-0 rounded-t-lg overflow-hidden"
-                style={{
-                  background: 'linear-gradient(180deg, hsl(35 40% 32%) 0%, hsl(32 35% 26%) 60%, hsl(30 32% 22%) 100%)',
-                  clipPath: 'polygon(0 0, 50% 95%, 100% 0)',
-                  backfaceVisibility: 'hidden',
-                  boxShadow: 'inset 0 -20px 40px hsl(0 0% 0% / 0.15)',
-                }}
-              >
-                {/* Paper texture */}
-                <div 
-                  className="absolute inset-0 opacity-25 mix-blend-overlay"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                  }}
-                />
-                
-                {/* Fold highlight */}
-                <div 
-                  className="absolute inset-x-0 top-0 h-8"
-                  style={{
-                    background: 'linear-gradient(180deg, hsl(40 45% 40% / 0.3) 0%, transparent 100%)',
-                  }}
-                />
-              </div>
-              
-              {/* Flap Back (visible when opened) */}
-              <div 
-                className="absolute inset-0 rounded-t-lg overflow-hidden"
-                style={{
-                  background: 'linear-gradient(0deg, hsl(32 25% 18%) 0%, hsl(30 22% 15%) 100%)',
-                  clipPath: 'polygon(0 0, 50% 95%, 100% 0)',
-                  transform: 'rotateX(180deg)',
-                  backfaceVisibility: 'hidden',
-                }}
-              />
+              <Letter isClosing={false} onClose={() => setState("closed")} />
             </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div> 
+    </motion.div>
+  )}
+</AnimatePresence>
 
-            {/* Envelope Body (Front face) */}
-            <div 
-              className="absolute bottom-0 left-0 right-0 rounded-b-lg overflow-hidden"
-              style={{
-                height: '72%',
-                background: 'linear-gradient(175deg, hsl(36 42% 36%) 0%, hsl(33 38% 30%) 40%, hsl(30 35% 24%) 100%)',
-                zIndex: 15,
-              }}
-            >
-              {/* Paper texture */}
-              <div 
-                className="absolute inset-0 opacity-20 mix-blend-overlay"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                }}
-              />
-              
-              {/* Bottom fold triangle */}
-              <div 
-                className="absolute top-0 left-0 right-0 h-[45%]"
-                style={{
-                  background: 'linear-gradient(0deg, hsl(36 42% 36%) 0%, hsl(34 36% 30%) 100%)',
-                  clipPath: 'polygon(0 0, 50% 80%, 100% 0)',
-                  boxShadow: '0 4px 15px hsl(0 0% 0% / 0.1)',
-                }}
-              />
-              
-              {/* Top edge shadow */}
-              <div 
-                className="absolute top-0 left-0 right-0 h-4"
-                style={{
-                  background: 'linear-gradient(180deg, hsl(0 0% 0% / 0.15) 0%, transparent 100%)',
-                }}
-              />
-              
-              {/* Side shadows for depth */}
-              <div 
-                className="absolute inset-0"
-                style={{
-                  boxShadow: 'inset 3px 0 10px hsl(0 0% 0% / 0.1), inset -3px 0 10px hsl(0 0% 0% / 0.1)',
-                }}
-              />
-            </div>
+      </div>
 
-            {/* Wax Seal */}
-            <AnimatePresence>
-              {(phase === 'idle' || phase === 'cracking') && (
-                <motion.button
-                  className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 z-30 cursor-pointer focus:outline-none group"
-                  onClick={handleSealClick}
-                  onMouseEnter={() => setIsHovered(true)}
-                  onMouseLeave={() => setIsHovered(false)}
-                  exit={{ 
-                    scale: [1, 1.15, 0],
-                    opacity: [1, 0.8, 0],
-                    rotate: [0, 8, 20],
-                  }}
-                  transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-                >
-                  {/* Seal base with slow breathing */}
-                  <motion.div 
-                    className="w-18 h-18 md:w-22 md:h-22 rounded-full flex items-center justify-center relative"
-                    style={{
-                      width: '72px',
-                      height: '72px',
-                      background: 'radial-gradient(circle at 35% 35%, hsl(5 65% 48%) 0%, hsl(0 60% 38%) 40%, hsl(355 55% 28%) 80%, hsl(350 50% 22%) 100%)',
-                      boxShadow: '0 6px 20px hsl(0 0% 0% / 0.5), inset 0 2px 6px hsl(0 70% 60% / 0.25), inset 0 -2px 4px hsl(0 0% 0% / 0.3)',
-                    }}
-                    animate={phase === 'idle' ? {
-                      scale: isHovered ? 1.08 : [1, 1.015, 1],
-                    } : {}}
-                    transition={phase === 'idle' && !isHovered ? {
-                      duration: 4,
-                      repeat: Infinity,
-                      ease: "easeInOut",
-                    } : { duration: 0.4 }}
-                  >
-                    {/* Wax texture */}
-                    <div 
-                      className="absolute inset-0 rounded-full opacity-40"
-                      style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-                      }}
-                    />
-                    
-                    {/* Embossed heart */}
-                    <span 
-                      className="text-2xl md:text-3xl relative z-10" 
-                      style={{ 
-                        filter: 'drop-shadow(0 1px 1px hsl(0 0% 0% / 0.4))',
-                        textShadow: '0 -1px 0 hsl(0 70% 55% / 0.3)',
-                      }}
-                    >
-                      💕
-                    </span>
-                    
-                    {/* Crack lines (appear on cracking phase) */}
-                    {phase === 'cracking' && (
-                      <motion.div 
-                        className="absolute inset-0 rounded-full"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        style={{
-                          background: `
-                            linear-gradient(45deg, transparent 48%, hsl(0 0% 0% / 0.6) 49%, hsl(0 0% 0% / 0.6) 51%, transparent 52%),
-                            linear-gradient(-30deg, transparent 48%, hsl(0 0% 0% / 0.5) 49%, hsl(0 0% 0% / 0.5) 51%, transparent 52%),
-                            linear-gradient(80deg, transparent 48%, hsl(0 0% 0% / 0.4) 49%, hsl(0 0% 0% / 0.4) 51%, transparent 52%)
-                          `,
-                        }}
-                      />
-                    )}
-                  </motion.div>
-                  
-                  {/* Hover glow */}
-                  <motion.div
-                    className="absolute inset-0 rounded-full pointer-events-none"
-                    animate={isHovered ? {
-                      boxShadow: '0 0 30px hsl(var(--hot-coral) / 0.5), 0 0 50px hsl(var(--hot-coral) / 0.2)',
-                    } : {
-                      boxShadow: '0 0 15px hsl(var(--hot-coral) / 0.2), 0 0 25px hsl(var(--hot-coral) / 0.1)',
-                    }}
-                    transition={{ duration: 0.6 }}
-                  />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </motion.div>
+      {/* Instruction text */}
+      {state === "closed" && (
+        <motion.p
+          className="absolute bottom-16 left-1/2 -translate-x-1/2 text-sm text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+        >
+          Tap the seal to open
+        </motion.p>
+      )}
+    </section>
+  );
+};
 
-          {/* Subtle tap hint */}
-          <motion.p
-            className="text-center mt-10 text-foreground/30 text-xs tracking-wide"
-            animate={phase === 'idle' ? {
-              opacity: [0.3, 0.5, 0.3],
-            } : { opacity: 0 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-          >
-            {phase === 'idle' ? 'break the seal' : ''}
-          </motion.p>
+// Envelope Component - Static wax seal, no hover animations
+const Envelope = ({ 
+  isOpening, 
+  onSealClick 
+}: { 
+  isOpening: boolean; 
+  onSealClick: () => void;
+}) => {
+  return (
+    <div className="relative w-full aspect-[4/3] max-w-sm mx-auto">
+      {/* Envelope body */}
+      <div
+        className="absolute inset-0 rounded-lg overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, hsl(30, 40%, 92%) 0%, hsl(25, 35%, 88%) 100%)",
+          boxShadow: "0 8px 32px -8px rgba(0,0,0,0.15), 0 4px 16px -4px rgba(0,0,0,0.1)",
+        }}
+      >
+        {/* Paper texture overlay */}
+        <div 
+          className="absolute inset-0 opacity-25"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          }}
+        />
+
+        {/* Envelope front V-fold lines */}
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 150" preserveAspectRatio="none">
+          <path
+            d="M0 150 L100 60 L200 150"
+            fill="none"
+            stroke="hsl(25, 25%, 82%)"
+            strokeWidth="0.5"
+          />
+        </svg>
+      </div>
+
+      {/* Envelope flap (triangular) */}
+      <motion.div
+        className="absolute top-0 left-0 right-0 origin-top"
+        initial={{ rotateX: 0 }}
+        animate={isOpening ? { rotateX: 180 } : { rotateX: 0 }}
+        transition={{ duration: 1.2, delay: 0.6, ease: [0.4, 0, 0.2, 1] }}
+        style={{ 
+          transformStyle: "preserve-3d",
+          perspective: "1000px",
+        }}
+      >
+        <svg viewBox="0 0 200 80" className="w-full" style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.08))" }}>
+          <path
+            d="M0 0 L100 70 L200 0 L200 0 L0 0 Z"
+            fill="url(#flapGradient)"
+          />
+          <defs>
+            <linearGradient id="flapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(30, 40%, 94%)" />
+              <stop offset="100%" stopColor="hsl(25, 35%, 90%)" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </motion.div>
+
+      {/* Wax Seal - COMPLETELY STATIC, no hover/idle animations */}
+      <div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
+        onClick={!isOpening ? onSealClick : undefined}
+        style={{ cursor: isOpening ? "default" : "pointer" }}
+      >
+        <motion.div
+          className="relative w-16 h-16 rounded-full"
+          style={{
+            background: "radial-gradient(circle at 35% 35%, hsl(350, 55%, 52%), hsl(350, 60%, 38%))",
+            boxShadow: "0 4px 12px -2px rgba(0,0,0,0.25), inset 0 1px 2px rgba(255,255,255,0.15)",
+          }}
+          animate={isOpening ? { 
+            scale: [1, 1.05, 0],
+            opacity: [1, 1, 0],
+          } : {}}
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+        >
+          {/* Seal emboss ring */}
+          <div className="absolute inset-2 rounded-full border border-white/15 flex items-center justify-center">
+            <span className="text-white/90 text-lg select-none">♥</span>
+          </div>
+          
+          {/* Seal crack effect on opening */}
+          {isOpening && (
+            <>
+              <motion.div
+                className="absolute top-1/2 left-1 right-1 h-px bg-black/30 -translate-y-1/2"
+                initial={{ scaleX: 0, opacity: 0 }}
+                animate={{ scaleX: 1, opacity: 1 }}
+                transition={{ duration: 0.25 }}
+              />
+              <motion.div
+                className="absolute top-1 bottom-1 left-1/2 w-px bg-black/30 -translate-x-1/2"
+                initial={{ scaleY: 0, opacity: 0 }}
+                animate={{ scaleY: 1, opacity: 1 }}
+                transition={{ duration: 0.25, delay: 0.1 }}
+              />
+            </>
+          )}
         </motion.div>
       </div>
 
-      {/* LETTER MODAL - Separate layer with higher z-index for sharp rendering */}
-      <AnimatePresence>
-        {showLetter && (
-          <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center px-4 md:px-8 pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <motion.div
-              className="relative w-full max-w-lg md:max-w-xl pointer-events-auto"
-              initial={{ y: 100, opacity: 0, scale: 0.9 }}
-              animate={{ 
-                y: 0, 
-                opacity: 1, 
-                scale: 1,
-              }}
-              exit={{ y: 50, opacity: 0, scale: 0.95 }}
-              transition={{ 
-                duration: 1.4, 
-                ease: [0.25, 0.46, 0.45, 0.94],
-              }}
-              onClick={(e) => e.stopPropagation()}
+      {/* Letter sliding out during opening */}
+      {isOpening && (
+        <motion.div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[82%] bg-gradient-to-b from-white to-stone-50 rounded-t-sm"
+          style={{
+            boxShadow: "0 -2px 8px rgba(0,0,0,0.08)",
+          }}
+          initial={{ y: "100%", height: 0 }}
+          animate={{ y: "-35%", height: "65%" }}
+          transition={{ duration: 1, delay: 1.2, ease: [0.4, 0, 0.2, 1] }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Letter Component - Fixed modal with internal scroll
+const Letter = ({ 
+  isClosing,
+  onClose 
+}: { 
+  isClosing: boolean;
+  onClose: () => void;
+}) => {
+  return (
+    <motion.div
+      className="relative w-full max-w-lg z-10"
+      initial={{ scale: 0.9, y: 30, opacity: 0 }}
+      animate={isClosing 
+        ? { scale: 0.9, y: 30, opacity: 0 }
+        : { scale: 1, y: 0, opacity: 1 }
+      }
+      transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Letter paper with max-height and internal scroll */}
+      <div 
+        className="relative rounded-lg overflow-hidden"
+        style={{
+          maxHeight: "80vh",
+          background: "linear-gradient(180deg, hsl(40, 30%, 98%) 0%, hsl(35, 25%, 95%) 100%)",
+          boxShadow: "0 20px 60px -15px rgba(0,0,0,0.2), 0 8px 24px -8px rgba(0,0,0,0.1)",
+        }}
+      >
+        {/* Paper texture */}
+        <div 
+          className="absolute inset-0 opacity-15 pointer-events-none"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)'/%3E%3C/svg%3E")`,
+          }}
+        />
+
+        {/* Close button */}
+        <button
+          className="absolute top-4 right-4 w-8 h-8 rounded-full bg-stone-200/60 hover:bg-stone-200 flex items-center justify-center text-stone-500 hover:text-stone-700 transition-colors z-20"
+          onClick={onClose}
+        >
+          <span className="text-lg leading-none">×</span>
+        </button>
+
+        {/* Letter content with internal scroll */}
+        <div 
+          className="overflow-y-auto"
+          style={{ maxHeight: "80vh" }}
+        >
+          <div className="p-6 sm:p-8 font-handwritten">
+            {/* Date */}
+            <motion.p
+              className="text-sm text-stone-500 mb-5 text-right font-light"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
             >
-              {/* Letter Paper */}
-              <motion.div
-                className="relative rounded-sm overflow-hidden cursor-default"
-                style={{
-                  background: 'linear-gradient(180deg, hsl(48 35% 96%) 0%, hsl(45 30% 92%) 50%, hsl(42 28% 88%) 100%)',
-                  boxShadow: '0 25px 80px hsl(0 0% 0% / 0.5), 0 10px 30px hsl(0 0% 0% / 0.3)',
+              February 14, 2024
+            </motion.p>
+
+            {/* Greeting */}
+            <motion.h3
+              className="font-display text-2xl sm:text-3xl text-pink-600 mb-5"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              My Dearest Love,
+            </motion.h3>
+
+            {/* First paragraph */}
+            <motion.p
+              className="letter-text text-base sm:text-lg text-stone-800 mb-3 leading-relaxed"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+            >
+              From the moment our paths crossed, my world has been painted 
+              in colors I never knew existed. You've shown me what it means 
+              to truly love and be loved in return.
+            </motion.p>
+
+            {/* Photo placeholder - Polaroid style */}
+            <motion.div
+              className="relative w-44 h-auto mx-auto my-6"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+            >
+              <div 
+                className="bg-white p-2 pb-6 rounded-sm"
+                style={{ 
+                  transform: "rotate(-2deg)",
+                  boxShadow: "0 4px 16px -4px rgba(0,0,0,0.12), 0 2px 6px -2px rgba(0,0,0,0.08)",
                 }}
-                animate={{
-                  minHeight: letterUnfolded ? '520px' : '280px',
-                }}
-                transition={{ duration: 1.2, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
-                {/* Paper texture */}
+                <div className="w-full aspect-[4/3] bg-stone-100 rounded-sm flex items-center justify-center">
+                  <span className="text-stone-500 text-xs italic">Our photo</span>
+                </div>
+                {/* Tape */}
                 <div 
-                  className="absolute inset-0 opacity-25 pointer-events-none"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+                  className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-4 rounded-sm opacity-60"
+                  style={{ 
+                    background: "linear-gradient(135deg, hsl(45, 40%, 85%) 0%, hsl(40, 35%, 80%) 100%)",
+                    transform: "rotate(1deg)",
                   }}
                 />
-
-                {/* Fold crease line */}
-                <motion.div
-                  className="absolute left-0 right-0 h-px pointer-events-none"
-                  style={{
-                    top: '50%',
-                    background: 'linear-gradient(90deg, transparent 5%, hsl(35 25% 75%) 20%, hsl(35 25% 75%) 80%, transparent 95%)',
-                  }}
-                  initial={{ opacity: 0.6 }}
-                  animate={{ opacity: letterUnfolded ? 0 : 0.6 }}
-                  transition={{ duration: 0.8, delay: 0.3 }}
-                />
-
-                {/* Letter Content */}
-                <motion.div
-                  className="p-6 md:p-10 relative z-10"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: letterUnfolded ? 1 : 0 }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                >
-                  {/* Greeting */}
-                  <motion.p
-                    className="font-handwritten text-xl md:text-2xl text-hot-coral mb-6 text-left"
-                    style={{ lineHeight: '1.6' }}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={fullyRevealed ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                  >
-                    {letterContent.greeting}
-                  </motion.p>
-
-                  {/* First paragraph */}
-                  <motion.p
-                    className="font-handwritten text-base md:text-lg mb-6 text-left"
-                    style={{ lineHeight: '2.1', color: 'hsl(30 20% 30%)' }}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={fullyRevealed ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.8, delay: 0.4 }}
-                  >
-                    {letterContent.paragraphs[0]}
-                  </motion.p>
-
-                  {/* Polaroid Image - Between first and second paragraph */}
-                  <motion.div
-                    className="my-8 flex justify-center"
-                    initial={{ opacity: 0, rotate: -6, scale: 0.85 }}
-                    animate={fullyRevealed ? { opacity: 1, rotate: 3, scale: 1 } : {}}
-                    transition={{ duration: 1.2, delay: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  >
-                    <div 
-                      className="relative bg-white p-2 md:p-3"
-                      style={{
-                        boxShadow: '0 8px 30px hsl(0 0% 0% / 0.18), 0 4px 12px hsl(0 0% 0% / 0.1)',
-                        transform: 'rotate(2deg)',
-                      }}
-                    >
-                      {/* Tape - slightly tilted */}
-                      <div 
-                        className="absolute -top-3 left-1/2 w-12 h-5 rounded-sm"
-                        style={{
-                          background: 'linear-gradient(180deg, hsl(50 40% 90% / 0.85) 0%, hsl(48 35% 85% / 0.8) 100%)',
-                          transform: 'translateX(-50%) rotate(-2deg)',
-                          boxShadow: '0 1px 4px hsl(0 0% 0% / 0.08)',
-                        }}
-                      />
-                      
-                      {/* Image placeholder */}
-                      <div 
-                        className="w-24 h-24 md:w-32 md:h-32 flex items-center justify-center rounded-sm overflow-hidden"
-                        style={{
-                          background: 'linear-gradient(135deg, hsl(var(--neon-pink) / 0.12) 0%, hsl(var(--golden-yellow) / 0.12) 100%)',
-                        }}
-                      >
-                        <span className="text-4xl md:text-5xl">💑</span>
-                      </div>
-                      
-                      {/* Caption */}
-                      <p className="font-handwritten text-xs md:text-sm text-center mt-2 italic" style={{ color: 'hsl(30 15% 45%)' }}>
-                        us, always 💕
-                      </p>
-                    </div>
-                  </motion.div>
-
-                  {/* Remaining paragraphs */}
-                  {letterContent.paragraphs.slice(1).map((para, index) => (
-                    <motion.p
-                      key={index}
-                      className="font-handwritten text-base md:text-lg mb-5 text-left"
-                      style={{ lineHeight: '2.1', color: 'hsl(30 20% 30%)' }}
-                      initial={{ opacity: 0, y: 15 }}
-                      animate={fullyRevealed ? { opacity: 1, y: 0 } : {}}
-                      transition={{ duration: 0.8, delay: 1.2 + index * 0.25 }}
-                    >
-                      {para}
-                    </motion.p>
-                  ))}
-
-                  {/* Closing */}
-                  <motion.div
-                    className="mt-10 space-y-1 text-left"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={fullyRevealed ? { opacity: 1, y: 0 } : {}}
-                    transition={{ duration: 0.8, delay: 2 }}
-                  >
-                    <p className="font-handwritten text-lg md:text-xl text-hot-coral">
-                      {letterContent.closing}
-                    </p>
-                    <p className="font-handwritten text-lg md:text-xl text-hot-coral">
-                      {letterContent.signature}
-                    </p>
-                  </motion.div>
-
-                  {/* Final fading line */}
-                  <motion.div
-                    className="mt-12 pt-6"
-                    style={{ borderTop: '1px solid hsl(35 30% 85%)' }}
-                    initial={{ opacity: 0 }}
-                    animate={fullyRevealed ? { opacity: 1 } : {}}
-                    transition={{ duration: 1.8, delay: 2.8 }}
-                  >
-                    <p className="font-handwritten text-sm md:text-base text-center italic" style={{ color: 'hsl(30 15% 55%)' }}>
-                      Written just for you.
-                    </p>
-                  </motion.div>
-                </motion.div>
-              </motion.div>
-
-              {/* Close hint */}
-              <motion.p
-                className="text-center mt-6 text-foreground/40 text-xs"
-                initial={{ opacity: 0 }}
-                animate={fullyRevealed ? { opacity: 1 } : {}}
-                transition={{ duration: 1, delay: 3.2 }}
-              >
-                tap outside to close
-              </motion.p>
+              </div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </section>
+
+            {/* Second paragraph */}
+            <motion.p
+              className="lletter-text text-base sm:text-lg text-stone-800 mb-3 leading-relaxed"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+            >              Every laugh we share, every quiet moment together—these 
+              are the treasures I hold closest to my heart.
+            </motion.p>
+
+            {/* Closing */}
+            <motion.p
+              className="letter-text text-base sm:text-lg text-stone-800 mb-3 leading-relaxed"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+            >
+              Thank you for being my person, my home. 
+              Here's to countless more memories together.
+            </motion.p>
+
+            {/* Signature */}
+            <motion.div
+              className="text-right pt-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.5 }}
+            >
+              <p className="font-display text-2xl sm:text-3xl text-pink-600 mb-3">
+                Forever Yours,
+              </p>
+              <p className="font-display text-2xl sm:text-3xl text-pink-600 mb-3">
+                ♥
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Rose Bouquet Component - Single cohesive composed bouquet
+const RoseBouquet = () => {
+  return (
+    <motion.div
+      className="flex flex-col items-center justify-center py-12"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+    >
+      <div className="relative w-56 h-72">
+        {/* Single composed bouquet SVG */}
+        <svg viewBox="0 0 200 280" className="w-full h-full">
+          <defs>
+            {/* Gradients */}
+            <linearGradient id="stemGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="hsl(140, 45%, 38%)" />
+              <stop offset="100%" stopColor="hsl(140, 40%, 30%)" />
+            </linearGradient>
+            <linearGradient id="leafGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(140, 50%, 42%)" />
+              <stop offset="100%" stopColor="hsl(140, 45%, 35%)" />
+            </linearGradient>
+            <radialGradient id="roseGradient" cx="40%" cy="40%">
+              <stop offset="0%" stopColor="hsl(350, 70%, 58%)" />
+              <stop offset="60%" stopColor="hsl(350, 65%, 48%)" />
+              <stop offset="100%" stopColor="hsl(350, 60%, 38%)" />
+            </radialGradient>
+            <linearGradient id="paperWrapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="hsl(350, 25%, 94%)" />
+              <stop offset="50%" stopColor="hsl(350, 30%, 96%)" />
+              <stop offset="100%" stopColor="hsl(350, 20%, 91%)" />
+            </linearGradient>
+            <linearGradient id="ribbonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="hsl(350, 55%, 52%)" />
+              <stop offset="50%" stopColor="hsl(350, 60%, 58%)" />
+              <stop offset="100%" stopColor="hsl(350, 55%, 52%)" />
+            </linearGradient>
+          </defs>
+
+          {/* Stems - rise together */}
+          <motion.g
+            initial={{ scaleY: 0, originY: 1 }}
+            animate={{ scaleY: 1 }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            style={{ transformOrigin: "100px 280px" }}
+          >
+            {/* Center stem */}
+            <path d="M100 280 L100 120" stroke="url(#stemGradient)" strokeWidth="4" fill="none" strokeLinecap="round" />
+            {/* Left stems */}
+            <path d="M100 280 Q85 200 75 130" stroke="url(#stemGradient)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+            <path d="M100 280 Q70 210 55 145" stroke="url(#stemGradient)" strokeWidth="3" fill="none" strokeLinecap="round" />
+            {/* Right stems */}
+            <path d="M100 280 Q115 200 125 130" stroke="url(#stemGradient)" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+            <path d="M100 280 Q130 210 145 145" stroke="url(#stemGradient)" strokeWidth="3" fill="none" strokeLinecap="round" />
+            
+            {/* Leaves */}
+            <ellipse cx="88" cy="190" rx="12" ry="6" fill="url(#leafGradient)" transform="rotate(-35 88 190)" />
+            <ellipse cx="112" cy="185" rx="11" ry="5" fill="url(#leafGradient)" transform="rotate(30 112 185)" />
+            <ellipse cx="72" cy="170" rx="10" ry="5" fill="url(#leafGradient)" transform="rotate(-45 72 170)" />
+            <ellipse cx="128" cy="168" rx="10" ry="5" fill="url(#leafGradient)" transform="rotate(40 128 168)" />
+          </motion.g>
+
+          {/* Roses cluster - bloom together as one unit */}
+          <motion.g
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 1, ease: [0.4, 0, 0.2, 1] }}
+            style={{ transformOrigin: "100px 100px" }}
+          >
+            {/* Center rose (largest) */}
+            <g transform="translate(100, 95)">
+              <circle r="22" fill="url(#roseGradient)" />
+              <circle r="14" fill="hsl(350, 65%, 52%)" />
+              <circle r="7" fill="hsl(350, 60%, 45%)" />
+              <circle r="3" fill="hsl(350, 55%, 40%)" />
+            </g>
+            
+            {/* Left roses */}
+            <g transform="translate(70, 110)">
+              <circle r="18" fill="url(#roseGradient)" />
+              <circle r="11" fill="hsl(350, 65%, 52%)" />
+              <circle r="5" fill="hsl(350, 60%, 45%)" />
+            </g>
+            <g transform="translate(52, 135)">
+              <circle r="15" fill="url(#roseGradient)" />
+              <circle r="9" fill="hsl(350, 65%, 52%)" />
+              <circle r="4" fill="hsl(350, 60%, 45%)" />
+            </g>
+            
+            {/* Right roses */}
+            <g transform="translate(130, 110)">
+              <circle r="18" fill="url(#roseGradient)" />
+              <circle r="11" fill="hsl(350, 65%, 52%)" />
+              <circle r="5" fill="hsl(350, 60%, 45%)" />
+            </g>
+            <g transform="translate(148, 135)">
+              <circle r="15" fill="url(#roseGradient)" />
+              <circle r="9" fill="hsl(350, 65%, 52%)" />
+              <circle r="4" fill="hsl(350, 60%, 45%)" />
+            </g>
+
+            {/* Top accent roses */}
+            <g transform="translate(85, 75)">
+              <circle r="12" fill="url(#roseGradient)" />
+              <circle r="7" fill="hsl(350, 65%, 52%)" />
+            </g>
+            <g transform="translate(115, 75)">
+              <circle r="12" fill="url(#roseGradient)" />
+              <circle r="7" fill="hsl(350, 65%, 52%)" />
+            </g>
+          </motion.g>
+
+          {/* Paper wrap - folds in */}
+          <motion.g
+            initial={{ scaleY: 0, opacity: 0 }}
+            animate={{ scaleY: 1, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 1.8, ease: [0.4, 0, 0.2, 1] }}
+            style={{ transformOrigin: "100px 280px" }}
+          >
+            <path
+              d="M30 165 L15 280 L185 280 L170 165 Q100 195 30 165"
+              fill="url(#paperWrapGradient)"
+              style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.08))" }}
+            />
+            {/* Paper fold lines */}
+            <path d="M50 180 L35 280" stroke="hsl(350, 15%, 88%)" strokeWidth="1" fill="none" />
+            <path d="M150 180 L165 280" stroke="hsl(350, 15%, 88%)" strokeWidth="1" fill="none" />
+          </motion.g>
+
+          {/* Ribbon bow - ties the bouquet */}
+          <motion.g
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, delay: 2.5, ease: [0.4, 0, 0.2, 1] }}
+            style={{ transformOrigin: "100px 195px" }}
+          >
+            {/* Ribbon tails */}
+            <path d="M85 200 Q75 220 80 240 L88 235 Q85 218 92 202" fill="url(#ribbonGrad)" />
+            <path d="M115 200 Q125 220 120 240 L112 235 Q115 218 108 202" fill="url(#ribbonGrad)" />
+            
+            {/* Bow loops */}
+            <ellipse cx="75" cy="192" rx="16" ry="10" fill="url(#ribbonGrad)" transform="rotate(-15 75 192)" />
+            <ellipse cx="125" cy="192" rx="16" ry="10" fill="url(#ribbonGrad)" transform="rotate(15 125 192)" />
+            
+            {/* Center knot */}
+            <ellipse cx="100" cy="195" rx="10" ry="8" fill="hsl(350, 50%, 48%)" />
+          </motion.g>
+        </svg>
+      </div>
+
+      {/* Message */}
+      <motion.p
+        className="mt-8 font-display text-xl sm:text-2xl text-foreground text-center"
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 3, ease: [0.4, 0, 0.2, 1] }}
+      >
+        This is for you.
+      </motion.p>
+
+      <motion.div
+        className="mt-3 flex items-center gap-3"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 3.4 }}
+      >
+        <div className="w-10 h-px bg-gradient-to-r from-transparent to-love/30" />
+        <span className="text-love text-base">♥</span>
+        <div className="w-10 h-px bg-gradient-to-l from-transparent to-love/30" />
+      </motion.div>
+    </motion.div>
   );
 };
 

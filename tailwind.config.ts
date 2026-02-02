@@ -69,7 +69,8 @@ export default {
       fontFamily: {
         display: ["Playfair Display", "Georgia", "serif"],
         body: ["Inter", "system-ui", "sans-serif"],
-        handwritten: ["Dancing Script", "cursive"],
+        //handwritten: ["Dancing Script", "cursive"],
+        handwritten: ["Caveat", "cursive"],
       },
       borderRadius: {
         lg: "var(--radius)",
