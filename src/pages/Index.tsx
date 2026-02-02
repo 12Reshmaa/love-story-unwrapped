@@ -3,7 +3,7 @@ import IntroMessageSection from '@/components/IntroMessageSection';
 import PhotoMemoriesSection from '@/components/PhotoMemoriesSection';
 import MovieSection from '@/components/MovieSection';
 import ScratchCardSection from '@/components/ScratchCardSection';
-import LoveLetterSection from '@/components/LoveLetterSection';
+import EnvelopeLetterSection from '@/components/EnvelopeLetterSection';
 import SignOffSection from '@/components/SignOffSection';
 import ExtraSurprisesHeader from '@/components/ExtraSurprisesHeader';
 import MysteryBoxSection from '@/components/MysteryBoxSection';
@@ -30,8 +30,8 @@ const Index = () => {
       {/* 5. Surprise Reveal - Scratch Card */}
       <ScratchCardSection />
       
-      {/* 6. Love Letter - Emotional climax */}
-      <LoveLetterSection />
+      {/* 6. Envelope Letter - Emotional climax */}
+      <EnvelopeLetterSection />
 
       {/* === Extra Interactive Add-ons === */}
       <ExtraSurprisesHeader />
