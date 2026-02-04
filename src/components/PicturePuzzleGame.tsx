@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import { useConfetti } from '@/hooks/useConfetti';
 
 interface Tile {
@@ -7,10 +7,14 @@ interface Tile {
   currentPosition: number;
 }
 
+// Placeholder image - replace with your couple photo
+const PUZZLE_IMAGE = 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&h=400&fit=crop';
+
 const PicturePuzzleGame = () => {
   const { burst } = useConfetti();
   const gridSize = 3; // 3x3 = 9 tiles
   const totalTiles = gridSize * gridSize;
+  const tileSize = 100; // Size percentage for background positioning
 
   // Create shuffled tiles
   const createShuffledTiles = useCallback(() => {
@@ -93,12 +97,16 @@ const PicturePuzzleGame = () => {
     };
   }, [gridSize]);
 
-  // Gradient colors for tiles (creates a heart pattern when solved)
-  const tileColors = useMemo(() => [
-    'hsl(340 80% 55%)', 'hsl(350 85% 60%)', 'hsl(340 80% 55%)',
-    'hsl(355 90% 65%)', 'hsl(0 85% 55%)', 'hsl(355 90% 65%)',
-    'hsl(10 75% 50%)', 'hsl(5 80% 55%)', 'hsl(10 75% 50%)',
-  ], []);
+  // Get background position for each tile piece
+  const getTileBackground = useCallback((tileId: number) => {
+    const row = Math.floor(tileId / gridSize);
+    const col = tileId % gridSize;
+    return {
+      backgroundImage: `url(${PUZZLE_IMAGE})`,
+      backgroundSize: `${gridSize * 100}%`,
+      backgroundPosition: `${col * (tileSize / (gridSize - 1))}% ${row * (tileSize / (gridSize - 1))}%`,
+    };
+  }, [gridSize, tileSize]);
 
   return (
     <div className="relative">
@@ -127,14 +135,14 @@ const PicturePuzzleGame = () => {
           {tiles.map((tile) => (
             <motion.button
               key={tile.id}
-              className={`relative rounded-lg cursor-pointer transition-all duration-200 ${
+              className={`relative rounded-lg cursor-pointer transition-all duration-200 overflow-hidden ${
                 selectedTile === tile.id 
                   ? 'ring-2 ring-white ring-offset-2 ring-offset-background z-10' 
                   : ''
               }`}
               style={{
                 ...getTileStyle(tile.currentPosition),
-                background: tileColors[tile.id],
+                ...getTileBackground(tile.id),
               }}
               onClick={() => handleTileClick(tile.id)}
               layout
