@@ -4,7 +4,7 @@ import PhotoMemoriesSection from '@/components/PhotoMemoriesSection';
 import MovieSection from '@/components/MovieSection';
 import EnvelopeLetterSection from '@/components/EnvelopeLetterSection';
 import SignOffSection from '@/components/SignOffSection';
-import ExtraSurprisesHeader from '@/components/ExtraSurprisesHeader';
+import ExtraSurprisesHeader from '@/components/ThingsILoveSection';
 import MysteryBoxSection from '@/components/MysteryBoxSection';
 import MiniGameSection from '@/components/MiniGameSection';
 import PlaylistPreviewSection from '@/components/PlaylistPreviewSection';
@@ -12,6 +12,7 @@ import TimeTogetherSection from '@/components/TimeTogetherSection';
 import CountdownSection from '@/components/CountdownSection';
 import ScratchReveal from "@/components/ScratchReveal";
 import PhotoGallery from "@/components/PhotoGallery";
+import ThingsILoveSection from '@/components/ThingsILoveSection'; 
 
 const Index = () => {
   return (
@@ -58,6 +59,8 @@ const Index = () => {
       <TimeTogetherSection />
 
       <PhotoGallery />   {/* 👈 THIS LINE IS REQUIRED */}
+
+      <ThingsILoveSection />   {/* 👈 THIS LINE IS REQUIRED */}
       
       {/* 11. Upcoming Moment Countdown */}
       <CountdownSection />

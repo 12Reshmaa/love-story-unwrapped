@@ -89,7 +89,17 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, [initCanvas, isRevealed]);
+  // FIX #1: Lock body scroll ONLY while actively scratching, restore immediately when revealed
   useEffect(() => {
+    // If revealed, always restore scroll regardless of drawing state
+    if (isRevealed) {
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+      document.body.style.position = "";
+      return;
+    }
+    
+    // Only lock scroll while actively drawing
     if (isDrawing.current) {
       document.body.style.overflow = "hidden";
       document.body.style.touchAction = "none";
@@ -99,10 +109,23 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
     }
   
     return () => {
+      // Cleanup: always restore scroll on unmount
       document.body.style.overflow = "";
       document.body.style.touchAction = "";
+      document.body.style.position = "";
     };
-  }, [scratchPercentage]);
+  }, [scratchPercentage, isRevealed]);
+
+  // FIX #1: Additional safeguard - restore scroll when revealed state changes
+  useEffect(() => {
+    if (isRevealed) {
+      // Immediately restore scroll when scratch is completed
+      document.body.style.overflow = "";
+      document.body.style.touchAction = "";
+      document.body.style.position = "";
+      isDrawing.current = false; // Ensure drawing state is cleared
+    }
+  }, [isRevealed]);
   
   const scratch = useCallback((x: number, y: number) => {
     const canvas = canvasRef.current;
@@ -253,21 +276,7 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
                 <p className="text-muted-foreground leading-relaxed mb-6 max-w-xs">
                   {revealContent.message}
                 </p>
-                {revealContent.link && isRevealed && (
-                  <motion.a
-                    href={revealContent.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-love text-love-foreground rounded-full text-sm font-medium shadow-soft hover:shadow-glow transition-all"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    Claim your gift 💝
-                  </motion.a>
-                )}
+                {/* FIX #2: Removed "Claim your gift" button - scratch card is informational only */}
               </motion.div>
             </div>
 
