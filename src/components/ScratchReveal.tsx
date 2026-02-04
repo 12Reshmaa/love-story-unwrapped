@@ -16,6 +16,7 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isRevealed, setIsRevealed] = useState(false);
   const [scratchPercentage, setScratchPercentage] = useState(0);
+  const [isDrawingState, setIsDrawingState] = useState(false);
   const isDrawing = useRef(false);
 
   const fireSparkle = useCallback((x: number, y: number) => {
@@ -91,39 +92,22 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
   }, [initCanvas, isRevealed]);
   // FIX #1: Lock body scroll ONLY while actively scratching, restore immediately when revealed
   useEffect(() => {
-    // If revealed, always restore scroll regardless of drawing state
-    if (isRevealed) {
-      document.body.style.overflow = "";
-      document.body.style.touchAction = "";
-      document.body.style.position = "";
-      return;
-    }
-    
-    // Only lock scroll while actively drawing
-    if (isDrawing.current) {
-      document.body.style.overflow = "hidden";
-      document.body.style.touchAction = "none";
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.touchAction = "";
-    }
-  
     return () => {
       // Cleanup: always restore scroll on unmount
       document.body.style.overflow = "";
       document.body.style.touchAction = "";
       document.body.style.position = "";
     };
-  }, [scratchPercentage, isRevealed]);
+  }, []);
 
   // FIX #1: Additional safeguard - restore scroll when revealed state changes
   useEffect(() => {
     if (isRevealed) {
-      // Immediately restore scroll when scratch is completed
       document.body.style.overflow = "";
       document.body.style.touchAction = "";
       document.body.style.position = "";
-      isDrawing.current = false; // Ensure drawing state is cleared
+      isDrawing.current = false;
+      setIsDrawingState(false);
     }
   }, [isRevealed]);
   
@@ -200,6 +184,7 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault(); 
     isDrawing.current = true;
+    setIsDrawingState(true);
     const pos = getPosition(e);
     scratch(pos.x, pos.y);
   };
@@ -213,6 +198,7 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
 
   const handleEnd = () => {
     isDrawing.current = false;
+    setIsDrawingState(false);
   };
 
   return (
@@ -283,7 +269,7 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
             {/* Scratch overlay */}
             <motion.canvas
               ref={canvasRef}
-              className="absolute inset-0 scratch-canvas touch-none"
+              className="absolute inset-0 scratch-canvas"
               onMouseDown={handleStart}
               onMouseMove={handleMove}
               onMouseUp={handleEnd}
@@ -291,10 +277,13 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
               onTouchStart={handleStart}
               onTouchMove={handleMove}
               onTouchEnd={handleEnd}
+              onTouchCancel={handleEnd}
               animate={{ opacity: isRevealed ? 0 : 1 }}
               transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-              style={{ pointerEvents: isRevealed ? "none" : "auto",
-              touchAction: "none"}}
+              style={{
+                pointerEvents: isRevealed ? "none" : "auto",
+                touchAction: isDrawingState ? "none" : "pan-y",
+              }}
             />
           </motion.div>
         </ScrollReveal>

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useInView } from 'framer-motion';
 
 const EnvelopeLetterSection = () => {
@@ -8,6 +8,22 @@ const EnvelopeLetterSection = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showLetter, setShowLetter] = useState(false);
   const [heartsFlying, setHeartsFlying] = useState(false);
+
+  useEffect(() => {
+    if (!showLetter) {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+      return;
+    }
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [showLetter]);
 
   const letterContent = [
     "To the one who makes ordinary days extraordinary,",
@@ -337,7 +353,7 @@ const EnvelopeLetterSection = () => {
         <AnimatePresence>
           {showLetter && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+              className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

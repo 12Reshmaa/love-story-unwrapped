@@ -1,5 +1,5 @@
 import { motion, useInView } from 'framer-motion';
-import { useRef, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 
 const genres = [
   { name: "ACTION", color: "bg-hot-coral" },
@@ -11,29 +11,67 @@ const genres = [
 const MovieSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-15%" });
-  const [bgColor, setBgColor] = useState(0);
+  const isInViewport = useInView(ref, { once: false, margin: "-15%" });
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  const bgColors = [
-    'hsl(var(--neon-pink))',
-    'hsl(var(--electric-purple))',
-    'hsl(var(--hot-coral))',
-    'hsl(var(--deep-magenta))',
-  ];
+  const handleOpenVideo = () => setIsVideoOpen(true);
+  const handleCloseVideo = useCallback(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.pause();
+      video.currentTime = 0;
+    }
+    setIsVideoOpen(false);
+  }, []);
 
   useEffect(() => {
-    if (isInView) {
-      const interval = setInterval(() => {
-        setBgColor(prev => (prev + 1) % bgColors.length);
-      }, 3000);
-      return () => clearInterval(interval);
+    if (!isInViewport && isVideoOpen) {
+      handleCloseVideo();
     }
-  }, [isInView]);
+  }, [isInViewport, isVideoOpen, handleCloseVideo]);
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') {
+        handleCloseVideo();
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [handleCloseVideo]);
+
+  useEffect(() => {
+    if (!isVideoOpen) return;
+
+    const onAnyInteraction = () => {
+      handleCloseVideo();
+    };
+
+    window.addEventListener('pointerdown', onAnyInteraction, true);
+    window.addEventListener('touchstart', onAnyInteraction, true);
+    return () => {
+      window.removeEventListener('pointerdown', onAnyInteraction, true);
+      window.removeEventListener('touchstart', onAnyInteraction, true);
+    };
+  }, [isVideoOpen, handleCloseVideo]);
+
+  useEffect(() => {
+    return () => {
+      const video = videoRef.current;
+      if (video) {
+        video.pause();
+        video.currentTime = 0;
+      }
+    };
+  }, []);
 
   return (
     <section 
       ref={ref} 
       className="min-h-screen flex items-center justify-center py-24 px-6 relative overflow-hidden transition-colors duration-[2000ms] ease-in-out"
-      style={{ backgroundColor: isInView ? bgColors[bgColor] : 'hsl(var(--background))' }}
+      style={{ backgroundColor: 'hsl(350 65% 92%)' }}
     >
       {/* Film grain overlay - reduced opacity */}
       <div 
@@ -56,7 +94,7 @@ const MovieSection = () => {
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative z-10 max-w-5xl mx-auto w-full">
+      <div className="relative z-10 max-w-4xl mx-auto w-full">
         <motion.div
           className="text-center mb-12"
           initial={{ opacity: 0, y: 40 }}
@@ -64,7 +102,7 @@ const MovieSection = () => {
           transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <motion.span
-            className="inline-block text-lg font-bold tracking-widest uppercase text-white/70 mb-4"
+            className="inline-block text-lg md:text-base font-bold tracking-widest uppercase text-black mb-4"
             initial={{ opacity: 0, y: 20 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.2, duration: 0.5 }}
@@ -72,7 +110,7 @@ const MovieSection = () => {
             🎬 Coming Soon 🎬
           </motion.span>
           <motion.h2
-            className="font-display text-5xl md:text-6xl lg:text-7xl font-bold text-white"
+            className="font-display text-5xl md:text-5xl lg:text-6xl font-bold text-pink-500"
             initial={{ opacity: 0, y: 30 }}
             animate={isInView ? { opacity: 1, y: 0 } : {}}
             transition={{ delay: 0.3, duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -85,7 +123,7 @@ const MovieSection = () => {
 
         {/* Movie poster card */}
         <motion.div
-          className="relative mx-auto max-w-2xl"
+          className="relative mx-auto max-w-md sm:max-w-lg md:max-w-xl"
           initial={{ opacity: 0, y: 60 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ delay: 0.4, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -107,7 +145,12 @@ const MovieSection = () => {
           {/* Main card */}
           <div className="relative rounded-3xl overflow-hidden shadow-2xl bg-black/80 backdrop-blur-sm border border-white/20">
             {/* Poster area */}
-            <div className="aspect-video bg-gradient-to-br from-deep-magenta to-neon-pink/50 relative overflow-hidden">
+            <div className="aspect-[4/3] md:aspect-video md:max-h-[360px] bg-gradient-to-br from-deep-magenta to-neon-pink/50 relative overflow-hidden">
+              <img
+                src="/zootopia-thumbnail.png"
+                alt="Video thumbnail"
+                className="absolute inset-0 w-full h-full object-cover opacity-90 pointer-events-none"
+              />
               {/* Film strip decorations */}
               <div className="absolute top-2 left-2 right-2 flex gap-1">
                 {[...Array(12)].map((_, i) => (
@@ -139,6 +182,10 @@ const MovieSection = () => {
                   animate={{ scale: [1, 1.05, 1] }}
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                   whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.35)', transition: { duration: 0.3 } }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenVideo();
+                  }}
                 >
                   <motion.svg 
                     className="w-16 h-16 text-white ml-2" 
@@ -152,6 +199,41 @@ const MovieSection = () => {
                 </motion.div>
               </div>
             </div>
+
+            {isVideoOpen && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8"
+                onClick={handleCloseVideo}
+              >
+                <div
+                  className="absolute inset-0 bg-black/70"
+                  onClick={handleCloseVideo}
+                />
+                <div className="relative z-10 w-full max-w-4xl">
+                  <div
+                    className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/20"
+                  >
+                    <video
+                      ref={videoRef}
+                      src="/zootopia-video.mp4"
+                      className="w-full h-auto"
+                      controls
+                      preload="metadata"
+                      playsInline
+                      onEnded={handleCloseVideo}
+                    />
+                    <button
+                      className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
+                      onClick={handleCloseVideo}
+                      aria-label="Close video"
+                      type="button"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Info panel */}
             <div className="p-8">
@@ -185,7 +267,7 @@ const MovieSection = () => {
                 >
                   <span className="text-white/60 text-lg">Runtime:</span>
                   <motion.span
-                    className="font-display text-4xl md:text-0.5xl font-bold text-black-bold"
+                    className="font-display text-2xl md:text-0.5xl font-bold text-black-bold"
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={isInView ? { scale: 1, opacity: 1 } : {}}
                     transition={{ delay: 1.5, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -202,7 +284,7 @@ const MovieSection = () => {
                 >
                   <span className="text-white/60 text-lg">Rating:</span>
                   <motion.span
-                    className="text-3xl md:text-4xl font-bold text-golden-yellow"
+                    className="text-3xl md:text-2xl font-bold text-golden-yellow"
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
                   >
@@ -216,7 +298,7 @@ const MovieSection = () => {
                   animate={isInView ? { y: 0, opacity: 1 } : {}}
                   transition={{ delay: 1.8, duration: 0.5 }}
                 >
-                  "An absolute masterpiece!" ⭐⭐⭐⭐⭐
+                  ⭐⭐⭐⭐⭐
                 </motion.p>
               </div>
             </div>
