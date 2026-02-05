@@ -215,7 +215,7 @@ const MovieSection = () => {
                   >
                     <video
                       ref={videoRef}
-                      src="/zootopia-video.mp4"
+                      src="/sample-testvideo.mp4"
                       className="w-full h-auto"
                       controls
                       preload="metadata"
