@@ -212,6 +212,7 @@ const MovieSection = () => {
                 <div className="relative z-10 w-full max-w-4xl">
                   <div
                     className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/20"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     <video
                       ref={videoRef}
