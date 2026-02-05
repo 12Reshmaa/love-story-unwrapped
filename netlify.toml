@@ -2,10 +2,13 @@
   command = "npm run build"
   publish = "dist"
 
-# --- HEADERS ---
 [[headers]]
-  for = "/videos/*.mp4"
+  for = "/static/*.mp4"
   [headers.values]
     Content-Type = "video/mp4"
     Accept-Ranges = "bytes"
 
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
