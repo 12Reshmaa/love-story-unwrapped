@@ -214,16 +214,17 @@ const MovieSection = () => {
                     className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/20"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <video
-                      ref={videoRef}
-                      className="w-full h-auto"
-                      controls
-                      preload="metadata"
-                      playsInline
-                      onEnded={handleCloseVideo}
-                    >
-                      <source src="/sample-testvideo.mp4" type="video/mp4" />
-                    </video>
+                  <video
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  controls
+                  className="w-full h-auto rounded-xl"
+>
+                  <source src="/videos/sample-testvideo.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
                     <button
                       className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
                       onClick={handleCloseVideo}
