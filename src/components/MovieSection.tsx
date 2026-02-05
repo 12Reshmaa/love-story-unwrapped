@@ -216,13 +216,14 @@ const MovieSection = () => {
                   >
                     <video
                       ref={videoRef}
-                      src="/sample-testvideo.mp4"
                       className="w-full h-auto"
                       controls
                       preload="metadata"
                       playsInline
                       onEnded={handleCloseVideo}
-                    />
+                    >
+                      <source src="/sample-testvideo.mp4" type="video/mp4" />
+                    </video>
                     <button
                       className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
                       onClick={handleCloseVideo}
