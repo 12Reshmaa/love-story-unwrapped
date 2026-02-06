@@ -216,7 +216,7 @@ const MovieSection = () => {
                   >
                     <iframe
                       className="w-full aspect-video"
-                      src="https://www.youtube.com/embed/2Vv-BfVoq4g?start=10&end=50&loop=1&playlist=2Vv-BfVoq4g&controls=0&rel=0&modestbranding=1"
+                      src="https://www.youtube.com/embed/2Vv-BfVoq4g?start=20&end=60&loop=1&playlist=2Vv-BfVoq4g&controls=0&rel=0&modestbranding=1"
                       title="Sample demo video"
                       frameBorder="0"
                       allow="encrypted-media; picture-in-picture"
