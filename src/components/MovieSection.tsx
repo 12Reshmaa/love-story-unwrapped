@@ -214,15 +214,9 @@ const MovieSection = () => {
                     className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/20"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <iframe
-                      className="w-full aspect-video"
-                      src="https://www.youtube.com/embed/2Vv-BfVoq4g?start=10&end=50&loop=1&playlist=2Vv-BfVoq4g&controls=0&rel=0&modestbranding=1"
-                      title="Sample demo video"
-                      frameBorder="0"
-                      allow="encrypted-media; picture-in-picture"
-                      allowFullScreen
-                      
-  />
+                  <video controls muted playsInline className="w-full rounded-xl">
+                    <source src="/videos/sample-testvideo.mp4" type="video/mp4" />
+                  </video>
                     <button
                       className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
                       onClick={handleCloseVideo}
