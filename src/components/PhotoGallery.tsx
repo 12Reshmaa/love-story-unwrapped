@@ -11,6 +11,7 @@ import {
 interface Photo {
   id: number;
   caption: string;
+  src?: string;
   placeholder: string;
   emoji: string;
 }
@@ -19,18 +20,21 @@ const photos: Photo[] = [
   {
     id: 1,
     caption: "Our favorite memory together 💕",
+    src: "/couple1.jpg",
     placeholder: "hsl(15, 80%, 85%)",
     emoji: "💕",
   },
   {
     id: 2,
     caption: "That time we couldn't stop laughing 😂",
+    src: "/couple2.jpg",
     placeholder: "hsl(340, 60%, 85%)",
     emoji: "😂",
   },
   {
     id: 3,
     caption: "Forever grateful for this friendship 🌟",
+    src: "/couple3.png",
     placeholder: "hsl(45, 70%, 85%)",
     emoji: "🌟",
   },
@@ -231,16 +235,26 @@ const PhotoGallery = () => {
                     className="aspect-square rounded flex items-center justify-center relative overflow-hidden"
                     style={{ backgroundColor: photo.placeholder }}
                   >
-                    <div className="text-center p-4">
-                      <span className="text-4xl mb-2 block">{photo.emoji}</span>
-                      <Heart
-                        className="w-12 h-12 text-primary/30 mx-auto animate-heart-beat"
-                        fill="currentColor"
+                    {photo.src ? (
+                      <img
+                        src={photo.src}
+                        alt={photo.caption}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        decoding="async"
                       />
-                      <p className="text-muted-foreground/70 text-xs mt-2">
-                        Add your photo
-                      </p>
-                    </div>
+                    ) : (
+                      <div className="text-center p-4">
+                        <span className="text-4xl mb-2 block">{photo.emoji}</span>
+                        <Heart
+                          className="w-12 h-12 text-primary/30 mx-auto animate-heart-beat"
+                          fill="currentColor"
+                        />
+                        <p className="text-muted-foreground/70 text-xs mt-2">
+                          Add your photo
+                        </p>
+                      </div>
+                    )}
 
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -307,13 +321,23 @@ const PhotoGallery = () => {
                   className="aspect-square rounded flex items-center justify-center"
                   style={{ backgroundColor: photo.placeholder }}
                 >
-                  <div className="text-center">
-                    <span className="text-3xl">{photo.emoji}</span>
-                    <Heart
-                      className="w-8 h-8 text-primary/30 mx-auto mt-2 animate-heart-beat"
-                      fill="currentColor"
+                  {photo.src ? (
+                    <img
+                      src={photo.src}
+                      alt={photo.caption}
+                      className="w-full h-full object-cover rounded"
+                      loading="lazy"
+                      decoding="async"
                     />
-                  </div>
+                  ) : (
+                    <div className="text-center">
+                      <span className="text-3xl">{photo.emoji}</span>
+                      <Heart
+                        className="w-8 h-8 text-primary/30 mx-auto mt-2 animate-heart-beat"
+                        fill="currentColor"
+                      />
+                    </div>
+                  )}
                 </div>
                 <p className="text-center text-xs mt-2 text-muted-foreground">
                   {photo.caption}

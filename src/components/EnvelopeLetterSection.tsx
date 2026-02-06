@@ -404,7 +404,7 @@ const EnvelopeLetterSection = () => {
                     }}
                   >
                     <img 
-                      src="/platifyplatypuslogo.png" 
+                      src="/couple1.jpg" 
                       alt="Our photo" 
                       className="w-full h-full object-cover"
                     />

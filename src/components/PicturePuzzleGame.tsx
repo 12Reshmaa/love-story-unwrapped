@@ -8,7 +8,7 @@ interface Tile {
 }
 
 // Placeholder image - replace with your couple photo
-const PUZZLE_IMAGE = 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&h=400&fit=crop';
+const PUZZLE_IMAGE = '/couple1.jpg';
 
 const PicturePuzzleGame = () => {
   const { burst } = useConfetti();

@@ -4,7 +4,6 @@ import PhotoMemoriesSection from '@/components/PhotoMemoriesSection';
 import MovieSection from '@/components/MovieSection';
 import EnvelopeLetterSection from '@/components/EnvelopeLetterSection';
 import SignOffSection from '@/components/SignOffSection';
-import MysteryBoxSection from '@/components/MysteryBoxSection';
 import MiniGameSection from '@/components/MiniGameSection';
 import PlaylistPreviewSection from '@/components/PlaylistPreviewSection';
 import TimeTogetherSection from '@/components/TimeTogetherSection';
@@ -43,10 +42,7 @@ const Index = () => {
 
       {/* === Extra Interactive Add-ons === */}
       
-      {/* 7. Mystery Box - Double-tap reveal */}
-      <MysteryBoxSection />
-      
-      
+    
       {/* 8. Mini Game - Fill the hearts */}
       <MiniGameSection />
       

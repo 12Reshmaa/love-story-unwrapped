@@ -239,29 +239,23 @@ const ScratchReveal = ({ revealContent }: ScratchRevealProps) => {
             whileHover={{ scale: isRevealed ? 1 : 1.02 }}
           >
             {/* Hidden content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-gradient-to-br from-card to-muted/50">
+            <div className="absolute inset-0 bg-gradient-to-br from-card to-muted/50">
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ 
-                  opacity: isRevealed ? 1 : 0.2, 
-                  scale: isRevealed ? 1 : 0.9 
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{
+                  opacity: 1,
+                  scale: isRevealed ? 1 : 0.98,
                 }}
                 transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-                className="text-center"
+                className="w-full h-full"
               >
-                <motion.span
-                  className="text-5xl block mb-4"
-                  animate={isRevealed ? { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] } : {}}
-                  transition={{ duration: 0.6 }}
-                >
-                  🎉
-                </motion.span>
-                <h3 className="text-2xl font-display font-light text-foreground mb-3">
-                  {revealContent.title}
-                </h3>
-                <p className="text-muted-foreground leading-relaxed mb-6 max-w-xs">
-                  {revealContent.message}
-                </p>
+                <img
+                  src="/giftcard.jpg"
+                  alt={revealContent.title}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
                 {/* FIX #2: Removed "Claim your gift" button - scratch card is informational only */}
               </motion.div>
             </div>

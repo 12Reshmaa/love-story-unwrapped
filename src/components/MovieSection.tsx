@@ -147,7 +147,7 @@ const MovieSection = () => {
             {/* Poster area */}
             <div className="aspect-[4/3] md:aspect-video md:max-h-[360px] bg-gradient-to-br from-deep-magenta to-neon-pink/50 relative overflow-hidden">
               <img
-                src="/zootopia-thumbnail.png"
+                src="/thumbnail.png"
                 alt="Video thumbnail"
                 className="absolute inset-0 w-full h-full object-cover opacity-90 pointer-events-none"
               />
@@ -214,9 +214,15 @@ const MovieSection = () => {
                     className="relative rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/20"
                     onClick={(e) => e.stopPropagation()}
                   >
-                  <video controls muted playsInline className="w-full rounded-xl">
-                    <source src="/static/sample-testvideo.mp4" type="video/mp4" />
-                  </video>
+                    <iframe
+                      className="w-full aspect-video"
+                      src="https://www.youtube.com/embed/2Vv-BfVoq4g?start=10&end=50&loop=1&playlist=2Vv-BfVoq4g&controls=0&rel=0&modestbranding=1"
+                      title="Sample demo video"
+                      frameBorder="0"
+                      allow="encrypted-media; picture-in-picture"
+                      allowFullScreen
+                      
+  />
                     <button
                       className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center"
                       onClick={handleCloseVideo}

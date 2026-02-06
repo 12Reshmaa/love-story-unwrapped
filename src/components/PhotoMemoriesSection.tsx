@@ -1,10 +1,11 @@
-import { motion, useInView } from 'framer-motion';
-import { useRef, useState } from 'react';
+ import { motion, useInView, AnimatePresence } from 'framer-motion';
+ import { useEffect, useRef, useState } from 'react';
 
 interface Memory {
   id: number;
   emoji: string;
   caption: string;
+  src?: string;
   rotation: number;
   gradient: string;
 }
@@ -12,49 +13,63 @@ interface Memory {
 const memories: Memory[] = [
   {
     id: 1,
-    emoji: "🚗✨",
-    caption: "That spontaneous road trip",
+    emoji: "�",
+    caption: "Us, in our own little world",
+    src: "/couple4",
     rotation: -3,
     gradient: "from-hot-coral via-sunset-orange to-golden-yellow",
   },
   {
     id: 2,
-    emoji: "🌙💬",
-    caption: "3am conversations",
+    emoji: "�",
+    caption: "Cat cuddles",
+    src: "/cat.png",
     rotation: 2,
     gradient: "from-electric-purple via-deep-magenta to-neon-pink",
   },
   {
     id: 3,
-    emoji: "☔💃",
-    caption: "Dancing in the rain",
+    emoji: "�",
+    caption: "Our Baby",
+    src: "/dog.png",
     rotation: -2,
     gradient: "from-cyan-blue via-electric-purple to-neon-pink",
   },
   {
     id: 4,
-    emoji: "🌅💕",
-    caption: "Sunset promises",
+    emoji: "�",
+    caption: "Park days",
+    src: "/prk.png",
     rotation: 4,
     gradient: "from-golden-yellow via-hot-coral to-neon-pink",
   },
   {
     id: 5,
-    emoji: "☕🥐",
-    caption: "Our favorite café",
+    emoji: "🚗✨",
+    caption: "That spontaneous road trip",
+    src: "/roadtrip.png",
     rotation: -4,
     gradient: "from-sunset-orange via-hot-coral to-deep-magenta",
   },
   {
     id: 6,
-    emoji: "🎵🎧",
-    caption: "Our playlist moments",
+    emoji: "✈️",
+    caption: "Travel memories",
+    src: "/travel.png",
     rotation: 3,
     gradient: "from-neon-pink via-electric-purple to-cyan-blue",
   },
 ];
 
-const PhotoCard = ({ memory, index }: { memory: Memory; index: number }) => {
+ const PhotoCard = ({
+   memory,
+   index,
+   onSelect,
+ }: {
+   memory: Memory;
+   index: number;
+   onSelect?: (memory: Memory) => void;
+ }) => {
   const [isHovered, setIsHovered] = useState(false);
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-5%" });
@@ -83,6 +98,7 @@ const PhotoCard = ({ memory, index }: { memory: Memory; index: number }) => {
       whileTap={{ scale: 0.98 }}
       onHoverStart={() => setIsHovered(true)}
       onHoverEnd={() => setIsHovered(false)}
+      onClick={() => onSelect?.(memory)}
     >
       {/* Polaroid-style frame */}
       <div 
@@ -95,16 +111,30 @@ const PhotoCard = ({ memory, index }: { memory: Memory; index: number }) => {
       >
         {/* Photo area */}
         <div className={`aspect-square rounded overflow-hidden bg-gradient-to-br ${memory.gradient} relative`}>
-          <motion.span
-            className="absolute inset-0 flex items-center justify-center text-5xl md:text-6xl"
-            animate={{ 
-              scale: isHovered ? [1, 1.1, 1] : 1,
-              rotate: isHovered ? [0, 5, -5, 0] : 0,
-            }}
-            transition={{ duration: 0.6 }}
-          >
-            {memory.emoji}
-          </motion.span>
+          {memory.src ? (
+            <motion.img
+              src={memory.src}
+              alt={memory.caption}
+              className="absolute inset-0 w-full h-full object-cover"
+              animate={{
+                scale: isHovered ? [1, 1.04, 1] : 1,
+              }}
+              transition={{ duration: 0.6 }}
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <motion.span
+              className="absolute inset-0 flex items-center justify-center text-5xl md:text-6xl"
+              animate={{ 
+                scale: isHovered ? [1, 1.1, 1] : 1,
+                rotate: isHovered ? [0, 5, -5, 0] : 0,
+              }}
+              transition={{ duration: 0.6 }}
+            >
+              {memory.emoji}
+            </motion.span>
+          )}
           
           {/* Shimmer overlay */}
           <motion.div
@@ -138,6 +168,17 @@ const PhotoCard = ({ memory, index }: { memory: Memory; index: number }) => {
 const PhotoMemoriesSection = () => {
   const headerRef = useRef(null);
   const isHeaderInView = useInView(headerRef, { once: true });
+  const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
+
+  useEffect(() => {
+    if (!selectedMemory) return;
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [selectedMemory]);
 
   return (
     <section className="py-24 md:py-32 px-6 bg-background relative overflow-hidden">
@@ -185,9 +226,54 @@ const PhotoMemoriesSection = () => {
         {/* Scrapbook grid - organic layout */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 max-w-4xl mx-auto">
           {memories.map((memory, index) => (
-            <PhotoCard key={memory.id} memory={memory} index={index} />
+            <PhotoCard
+              key={memory.id}
+              memory={memory}
+              index={index}
+              onSelect={setSelectedMemory}
+            />
           ))}
         </div>
+
+        <AnimatePresence>
+          {selectedMemory && (
+            <motion.div
+              className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedMemory(null)}
+            >
+              <motion.div
+                className="w-full max-w-xl"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="rounded-2xl overflow-hidden border border-white/20 shadow-2xl bg-black/20">
+                  {selectedMemory.src ? (
+                    <img
+                      src={selectedMemory.src}
+                      alt={selectedMemory.caption}
+                      className="w-full max-h-[80vh] object-contain bg-black"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  ) : (
+                    <div className="w-full h-[60vh] flex items-center justify-center bg-black text-7xl">
+                      {selectedMemory.emoji}
+                    </div>
+                  )}
+                </div>
+                <p className="mt-3 text-center text-white/80 font-handwritten">
+                  {selectedMemory.caption}
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Bottom decoration */}
         <motion.div
